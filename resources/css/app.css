@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.select-clean {
+    padding-right: 2.5rem !important;
+}

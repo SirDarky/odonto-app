@@ -4,7 +4,9 @@ import { useToast } from '@/Contexts/ToastContext';
 import { useTrans } from '@/Hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { AnimatePresence, motion, Variants } from 'framer-motion';
+import { CalendarDays, Sparkles } from 'lucide-react';
+import { FormEvent, useMemo, useState } from 'react';
 import AvailabilityCard from './Partials/AvailabilityCard';
 
 interface Availability {
@@ -29,9 +31,10 @@ const timeOptions = Array.from({ length: 96 }, (_, i) => {
 export default function Settings({ availabilities }: Props) {
     const { t } = useTrans();
     const { addToast } = useToast();
-
     const [isBulk, setIsBulk] = useState(true);
     const [slotDuration, setSlotDuration] = useState(30);
+    // Estado para controlar se algum dropdown interno está aberto
+    const [isAnyDropdownOpen, setIsAnyDropdownOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
@@ -40,33 +43,59 @@ export default function Settings({ availabilities }: Props) {
             end_time: '',
         });
 
-    const daysSelection = [
-        { label: t('DAYS.MONDAY'), value: 1 },
-        { label: t('DAYS.TUESDAY'), value: 2 },
-        { label: t('DAYS.WEDNESDAY'), value: 3 },
-        { label: t('DAYS.THURSDAY'), value: 4 },
-        { label: t('DAYS.FRIDAY'), value: 5 },
-        { label: t('DAYS.SATURDAY'), value: 6 },
-        { label: t('DAYS.SUNDAY'), value: 0 },
-    ];
-
-    const getDayLabel = (value: number) => {
-        const labels: Record<number, string> = {
-            1: t('DAYS.MONDAY'),
-            2: t('DAYS.TUESDAY'),
-            3: t('DAYS.WEDNESDAY'),
-            4: t('DAYS.THURSDAY'),
-            5: t('DAYS.FRIDAY'),
-            6: t('DAYS.SATURDAY'),
-            0: t('DAYS.SUNDAY'),
-        };
-        return labels[value] || '';
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05, delayChildren: 0.1 },
+        },
     };
 
-    const timeOptionsFormatted = timeOptions.map((t) => ({
-        label: t,
-        value: t,
-    }));
+    const itemVariants: Variants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: { type: 'spring', stiffness: 300, damping: 24 },
+        },
+        exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
+    };
+
+    const daysSelection = useMemo(
+        () => [
+            { label: t('DAYS.MONDAY'), value: 1 },
+            { label: t('DAYS.TUESDAY'), value: 2 },
+            { label: t('DAYS.WEDNESDAY'), value: 3 },
+            { label: t('DAYS.THURSDAY'), value: 4 },
+            { label: t('DAYS.FRIDAY'), value: 5 },
+            { label: t('DAYS.SATURDAY'), value: 6 },
+            { label: t('DAYS.SUNDAY'), value: 0 },
+        ],
+        [t],
+    );
+
+    const timeOptionsFormatted = useMemo(
+        () => timeOptions.map((time) => ({ label: time, value: time })),
+        [],
+    );
+
+    const getDayLabel = (value: number) => {
+        const day = daysSelection.find((d) => d.value === value);
+        return day ? day.label : '';
+    };
+
+    const parseTimeToMinutes = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const formatMinutesToTime = (totalMinutes: number) => {
+        const h = Math.floor(totalMinutes / 60)
+            .toString()
+            .padStart(2, '0');
+        const m = (totalMinutes % 60).toString().padStart(2, '0');
+        return `${h}:${m}`;
+    };
 
     const submit = async (e: FormEvent) => {
         e.preventDefault();
@@ -83,15 +112,10 @@ export default function Settings({ availabilities }: Props) {
         }
 
         if (isBulk) {
-            const start = parseTimeToMinutes(data.start_time);
-            const end = parseTimeToMinutes(data.end_time);
-            if (end - start < slotDuration) {
-                addToast(t('ERRORS.INVALID_DURATION'), ToastType.ERROR);
-                return;
-            }
-            await generateBulkSlots();
+            generateBulkSlots();
         } else {
             post(route('schedule.settings.store'), {
+                preserveScroll: true,
                 onSuccess: () => {
                     reset('start_time', 'end_time');
                     addToast(t('SUCCESS.ADDED'), ToastType.SUCCESS);
@@ -102,44 +126,36 @@ export default function Settings({ availabilities }: Props) {
         }
     };
 
-    const generateBulkSlots = async () => {
+    const generateBulkSlots = () => {
         const start = parseTimeToMinutes(data.start_time);
         const end = parseTimeToMinutes(data.end_time);
         let current = start;
+        const slotsToGenerate = [];
 
         while (current + slotDuration <= end) {
-            const slotStart = formatMinutesToTime(current);
-            const slotEnd = formatMinutesToTime(current + slotDuration);
-
-            router.post(
-                route('schedule.settings.store'),
-                {
-                    day_of_week: data.day_of_week,
-                    start_time: slotStart,
-                    end_time: slotEnd,
-                },
-                {
-                    preserveScroll: true,
-                    onSuccess: () => reset('start_time', 'end_time'),
-                },
-            );
-
+            slotsToGenerate.push({
+                day_of_week: data.day_of_week,
+                start_time: formatMinutesToTime(current),
+                end_time: formatMinutesToTime(current + slotDuration),
+            });
             current += slotDuration;
         }
-        addToast(t('SUCCESS.ADDED'), ToastType.SUCCESS);
-    };
 
-    const parseTimeToMinutes = (time: string) => {
-        const [h, m] = time.split(':').map(Number);
-        return h * 60 + m;
-    };
-
-    const formatMinutesToTime = (totalMinutes: number) => {
-        const h = Math.floor(totalMinutes / 60)
-            .toString()
-            .padStart(2, '0');
-        const m = (totalMinutes % 60).toString().padStart(2, '0');
-        return `${h}:${m}`;
+        let completedCount = 0;
+        slotsToGenerate.forEach((slot) => {
+            router.post(route('schedule.settings.store'), slot, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    completedCount++;
+                    if (completedCount === slotsToGenerate.length) {
+                        addToast(t('SUCCESS.ADDED'), ToastType.SUCCESS);
+                        reset('start_time', 'end_time');
+                        router.reload({ only: ['availabilities'] });
+                    }
+                },
+            });
+        });
     };
 
     const handleRemove = (id: number) => {
@@ -156,112 +172,125 @@ export default function Settings({ availabilities }: Props) {
         <AuthenticatedLayout>
             <Head title={t('SCHEDULE.PAGE_TITLE')} />
 
-            <div className="relative min-h-screen overflow-hidden bg-[#FBFDFF] pb-20">
-                <div className="relative mx-auto max-w-7xl px-6 py-6">
-                    <div className="animate-in fade-in zoom-in-95 relative z-50 mb-12 duration-700">
-                        <div className="rounded-[2.5rem] border border-white bg-white/70 p-1 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] backdrop-blur-xl">
-                            <form
-                                onSubmit={submit}
-                                className="flex flex-col gap-8 rounded-[2.2rem] border border-slate-100 bg-white p-8 md:p-10"
-                            >
-                                <div className="flex justify-center">
-                                    <div className="flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsBulk(true)}
-                                            className={`rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isBulk ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            {t('SCHEDULE.GENERATOR')}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsBulk(false)}
-                                            className={`rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${!isBulk ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            {t('SCHEDULE.INDIVIDUAL')}
-                                        </button>
-                                    </div>
+            <div className="relative min-h-screen bg-[#FBFDFF] pb-32">
+                <div className="relative mx-auto max-w-7xl px-6 py-12">
+                    {/* Container do Formulário com Z-index superior quando aberto */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        style={{ zIndex: isAnyDropdownOpen ? 50 : 10 }}
+                        className="relative mb-16 rounded-[3rem] border border-white bg-white/70 p-1 shadow-sm backdrop-blur-xl"
+                    >
+                        <form
+                            onSubmit={submit}
+                            className="flex flex-col gap-10 rounded-[2.8rem] border border-slate-100 bg-white p-8 md:p-12"
+                        >
+                            <div className="flex justify-center">
+                                <div className="flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1.5 shadow-inner">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsBulk(true)}
+                                        className={`rounded-xl px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${isBulk ? 'bg-white text-blue-600 shadow-lg' : 'text-slate-400'}`}
+                                    >
+                                        <Sparkles className="mr-2 inline h-3 w-3" />{' '}
+                                        {t('SCHEDULE.GENERATOR')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsBulk(false)}
+                                        className={`rounded-xl px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${!isBulk ? 'bg-white text-blue-600 shadow-lg' : 'text-slate-400'}`}
+                                    >
+                                        <CalendarDays className="mr-2 inline h-3 w-3" />{' '}
+                                        {t('SCHEDULE.INDIVIDUAL')}
+                                    </button>
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-1 items-end gap-8 md:grid-cols-12">
-                                    <div className="md:col-span-4">
-                                        <CustomAutocomplete
-                                            label={t('SCHEDULE.DAY_OF_WEEK')}
-                                            value={data.day_of_week}
-                                            options={daysSelection}
-                                            onChange={(val) =>
-                                                setData('day_of_week', val)
-                                            }
-                                            error={errors.day_of_week}
-                                        />
-                                    </div>
-
-                                    <div className="md:col-span-3">
-                                        <CustomAutocomplete
-                                            label={
-                                                isBulk
-                                                    ? t('SCHEDULE.SHIFT_START')
-                                                    : t('SCHEDULE.START')
-                                            }
-                                            value={data.start_time}
-                                            options={timeOptionsFormatted}
-                                            onChange={(val) =>
-                                                setData('start_time', val)
-                                            }
-                                            isTime
-                                            placeholder="08:00"
-                                            error={errors.start_time}
-                                        />
-                                    </div>
-
-                                    <div className="md:col-span-3">
-                                        <CustomAutocomplete
-                                            label={
-                                                isBulk
-                                                    ? t('SCHEDULE.SHIFT_END')
-                                                    : t('SCHEDULE.END')
-                                            }
-                                            value={data.end_time}
-                                            options={timeOptionsFormatted}
-                                            onChange={(val) =>
-                                                setData('end_time', val)
-                                            }
-                                            isTime
-                                            placeholder="18:00"
-                                            error={errors.end_time}
-                                        />
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <button
-                                            disabled={processing}
-                                            className="group flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-xl transition-all duration-500 hover:-translate-y-1 hover:bg-blue-600 active:scale-95 disabled:opacity-50"
-                                        >
-                                            {processing
-                                                ? '...'
-                                                : isBulk
-                                                  ? t(
-                                                        'SCHEDULE.ACTION_GENERATE',
-                                                    )
-                                                  : t('SCHEDULE.ACTION_ADD')}
-                                        </button>
-                                    </div>
+                            <div className="grid grid-cols-1 items-end gap-10 md:grid-cols-12">
+                                <div className="md:col-span-4">
+                                    <CustomAutocomplete
+                                        label={t('SCHEDULE.DAY_OF_WEEK')}
+                                        value={data.day_of_week}
+                                        options={daysSelection}
+                                        onChange={(val) =>
+                                            setData('day_of_week', Number(val))
+                                        }
+                                        onToggleOpen={setIsAnyDropdownOpen}
+                                        error={errors.day_of_week}
+                                    />
                                 </div>
+                                <div className="md:col-span-3">
+                                    <CustomAutocomplete
+                                        label={
+                                            isBulk
+                                                ? t('SCHEDULE.SHIFT_START')
+                                                : t('SCHEDULE.START')
+                                        }
+                                        value={data.start_time}
+                                        options={timeOptionsFormatted}
+                                        onChange={(val) =>
+                                            setData('start_time', String(val))
+                                        }
+                                        onToggleOpen={setIsAnyDropdownOpen}
+                                        isTime
+                                        placeholder="08:00"
+                                        error={errors.start_time}
+                                    />
+                                </div>
+                                <div className="md:col-span-3">
+                                    <CustomAutocomplete
+                                        label={
+                                            isBulk
+                                                ? t('SCHEDULE.SHIFT_END')
+                                                : t('SCHEDULE.END')
+                                        }
+                                        value={data.end_time}
+                                        options={timeOptionsFormatted}
+                                        onChange={(val) =>
+                                            setData('end_time', String(val))
+                                        }
+                                        onToggleOpen={setIsAnyDropdownOpen}
+                                        isTime
+                                        placeholder="18:00"
+                                        error={errors.end_time}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        disabled={processing}
+                                        className="h-[60px] w-full rounded-2xl bg-slate-900 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-blue-600 disabled:opacity-50"
+                                    >
+                                        {processing
+                                            ? '...'
+                                            : isBulk
+                                              ? t('SCHEDULE.ACTION_GENERATE')
+                                              : t('SCHEDULE.ACTION_ADD')}
+                                    </motion.button>
+                                </div>
+                            </div>
 
+                            <AnimatePresence>
                                 {isBulk && (
-                                    <div className="animate-in slide-in-from-top-4 border-t border-slate-50 pt-6 duration-500">
-                                        <div className="flex flex-col items-center justify-between gap-4 rounded-[1.5rem] border border-blue-100/50 bg-blue-50/30 p-6 md:flex-row">
-                                            <div className="flex flex-col">
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden border-t border-slate-50 pt-8"
+                                    >
+                                        <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-blue-100/50 bg-blue-50/20 p-8 md:flex-row">
+                                            <div className="flex flex-col gap-1">
                                                 <span className="text-sm font-black uppercase tracking-tighter text-blue-900">
                                                     {t(
                                                         'SCHEDULE.SESSION_DURATION',
                                                     )}
                                                 </span>
-                                                <span className="text-xs font-medium text-blue-600">
+                                                <span className="text-xs font-bold text-blue-500/70">
                                                     {t('SCHEDULE.BULK_HELPER')}
                                                 </span>
                                             </div>
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-wrap justify-center gap-3">
                                                 {[30, 45, 60, 90].map((min) => (
                                                     <button
                                                         key={min}
@@ -269,7 +298,7 @@ export default function Settings({ availabilities }: Props) {
                                                         onClick={() =>
                                                             setSlotDuration(min)
                                                         }
-                                                        className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${slotDuration === min ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'border border-slate-100 bg-white text-slate-400'}`}
+                                                        className={`rounded-xl px-6 py-2.5 text-xs font-black transition-all ${slotDuration === min ? 'bg-blue-600 text-white shadow-xl' : 'border border-slate-100 bg-white text-slate-400'}`}
                                                     >
                                                         {min >= 60
                                                             ? `${min / 60}h`
@@ -278,34 +307,33 @@ export default function Settings({ availabilities }: Props) {
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 )}
-                            </form>
-                        </div>
-                    </div>
+                            </AnimatePresence>
+                        </form>
+                    </motion.div>
 
-                    <div className="space-y-12">
-                        {[1, 2, 3, 4, 5, 6, 0].map((dayValue, index) => {
+                    <div className="space-y-16">
+                        {[1, 2, 3, 4, 5, 6, 0].map((dayValue) => {
                             const slots = availabilities.filter(
                                 (s) => s.day_of_week === dayValue,
                             );
                             if (slots.length === 0) return null;
-
                             return (
-                                <section
+                                <motion.section
                                     key={dayValue}
-                                    className="animate-in fade-in slide-in-from-bottom-8 duration-700"
-                                    style={{
-                                        animationDelay: `${index * 100}ms`,
-                                    }}
+                                    variants={containerVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    className="w-full"
                                 >
-                                    <div className="mb-8 flex items-center gap-6">
-                                        <h4 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">
+                                    <div className="mb-10 flex items-center gap-6">
+                                        <h4 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
                                             {getDayLabel(dayValue)}
                                         </h4>
                                         <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
-                                        <div className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-4 py-1.5">
-                                            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
+                                        <div className="flex items-center gap-3 rounded-full bg-slate-50 px-5 py-2 ring-1 ring-slate-100">
+                                            <div className="h-2 w-2 rounded-full bg-blue-500 shadow-sm" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                                                 {slots.length}{' '}
                                                 {slots.length === 1
@@ -316,21 +344,34 @@ export default function Settings({ availabilities }: Props) {
                                             </span>
                                         </div>
                                     </div>
-
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                                        {slots.map((slot) => (
-                                            <AvailabilityCard
-                                                key={slot.id}
-                                                start={slot.start_time}
-                                                end={slot.end_time}
-                                                label={t('SCHEDULE.LABEL_TIME')}
-                                                onRemove={() =>
-                                                    handleRemove(slot.id)
-                                                }
-                                            />
-                                        ))}
+                                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                                        <AnimatePresence mode="popLayout">
+                                            {slots.map((slot) => (
+                                                <motion.div
+                                                    key={slot.id}
+                                                    variants={itemVariants}
+                                                    initial="hidden"
+                                                    animate="visible"
+                                                    exit="exit"
+                                                    layout
+                                                >
+                                                    <AvailabilityCard
+                                                        start={slot.start_time}
+                                                        end={slot.end_time}
+                                                        label={t(
+                                                            'SCHEDULE.LABEL_TIME',
+                                                        )}
+                                                        onRemove={() =>
+                                                            handleRemove(
+                                                                slot.id,
+                                                            )
+                                                        }
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
                                     </div>
-                                </section>
+                                </motion.section>
                             );
                         })}
                     </div>

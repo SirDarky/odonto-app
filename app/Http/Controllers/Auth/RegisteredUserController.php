@@ -10,24 +10,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Support\Str; // Importante para o slug
 use Inertia\Inertia;
 use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): Response
     {
         return Inertia::render('Auth/Register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -39,6 +32,8 @@ class RegisteredUserController extends Controller
             'phone' => 'required|string',
         ]);
 
+        $uniqueSlug = Str::lower(Str::random(8));
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -46,6 +41,7 @@ class RegisteredUserController extends Controller
             'cro' => $request->cro,
             'cro_state' => $request->cro_state,
             'phone' => $request->phone,
+            'slug' => $uniqueSlug,
         ]);
 
         event(new Registered($user));

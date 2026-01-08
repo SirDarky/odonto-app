@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
@@ -21,7 +21,12 @@ class User extends Authenticatable
         'cro_state',
         'phone',
         'is_admin',
+        'slug',
+        'specialty',
+        'bio',
+        'avatar_path',
     ];
+
 
     protected $hidden = [
         'password',
@@ -40,17 +45,26 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Mutator para o Slug.
+     * Garante que o link seja sempre "nome-do-dentista" (lowercase e sem espaços).
+     */
+    protected function setSlugAttribute($value): void
+    {
+        $this->attributes['slug'] = Str::slug($value);
+    }
+
     public function availabilities(): HasMany
     {
         return $this->hasMany(StandardAvailability::class);
     }
 
-    public function appointments()
+    public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
     }
 
-    public function blocks()
+    public function blocks(): HasMany
     {
         return $this->hasMany(Block::class);
     }

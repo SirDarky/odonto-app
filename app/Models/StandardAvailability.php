@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class StandardAvailability extends Model
 {
@@ -13,4 +15,17 @@ class StandardAvailability extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getLocalStartTimeAttribute()
+    {
+        $tz = Auth::user()->timezone ?? 'UTC';
+        return Carbon::createFromFormat('H:i:s', $this->attributes['start_time'], 'UTC')
+            ->tz($tz)
+            ->format('H:i');
+    }
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
 }

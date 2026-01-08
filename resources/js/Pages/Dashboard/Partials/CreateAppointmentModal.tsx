@@ -38,7 +38,6 @@ export default function CreateAppointmentModal({
             start_time: selectedTime,
         });
 
-    // Sincroniza data e hora ao abrir
     useEffect(() => {
         if (isOpen) {
             setData((prev) => ({
@@ -49,7 +48,6 @@ export default function CreateAppointmentModal({
         }
     }, [isOpen, selectedTime, selectedDate, setData]);
 
-    // Limpa o formulário ao fechar o modal
     useEffect(() => {
         if (!isOpen) {
             reset();
@@ -104,7 +102,6 @@ export default function CreateAppointmentModal({
         [setData],
     );
 
-    // Busca automática ao completar 11 dígitos
     useEffect(() => {
         const clean = data.cpf.replace(/\D/g, '');
         if (clean.length === 11) {

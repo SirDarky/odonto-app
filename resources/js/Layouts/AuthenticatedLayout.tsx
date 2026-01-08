@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { useTrans } from '@/Hooks/useTrans';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -10,6 +11,7 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const user = usePage().props.auth.user;
+    const { t } = useTrans();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -37,7 +39,7 @@ export default function Authenticated({
                                     href={route('schedule.index')}
                                     active={route().current('schedule.index')}
                                 >
-                                    Agendamento
+                                    {t('SETTINGS.CENTER')}
                                 </NavLink>
                             </div>
                         </div>

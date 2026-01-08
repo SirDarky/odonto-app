@@ -1,4 +1,5 @@
 {
+    "LINK_APP": "odonto-app.test",
     "SCHEDULE": {
         "SETTINGS": "Configuração",
         "TITLE": "Configurar Horários",
@@ -28,7 +29,40 @@
         "SLOT_ACTIVE": "Slot Ativo",
         "SLOTS_ACTIVE": "Slots Ativos",
         "LABEL_TIME": "Horário Disponível",
-        "ADD_BUTTON": "Adicionar Horário"
+        "ADD_BUTTON": "Adicionar Horário",
+        "CONFIGURATION": "Configuração de Sistema"
+    },
+    "PROFILE": {
+        "TITLE": "Perfil",
+        "INFO_TITLE": "Informações do Perfil",
+        "INFO_DESCRIPTION": "Atualize suas informações básicas e sua identidade profissional.",
+        "LABEL_NAME": "Nome Completo",
+        "LABEL_EMAIL": "E-mail",
+        "LABEL_SLUG": "Link Personalizado (Slug)",
+        "LABEL_SPECIALTY": "Especialidade Profissional",
+        "LABEL_BIO": "Resumo Profissional (Bio)",
+        "SAVE": "Salvar Alterações",
+        "SAVED": "Salvo com sucesso.",
+        "AVATAR_TITLE": "Foto de Perfil",
+        "AVATAR_HINT": "PNG ou JPG • Máx 2MB",
+        "AVATAR_REMOVE": "Remover seleção",
+        "PASSWORD_TITLE": "Segurança da Conta",
+        "PASSWORD_DESCRIPTION": "Atualize sua senha periodicamente para manter seus dados protegidos.",
+        "LABEL_CURRENT_PASSWORD": "Senha Atual",
+        "LABEL_NEW_PASSWORD": "Nova Senha",
+        "LABEL_CONFIRM_PASSWORD": "Confirmar Nova Senha",
+        "PASSWORD_HINT": "Use uma combinação de letras, números e símbolos.",
+        "DELETE_TITLE": "Encerrar Conta",
+        "DELETE_DESCRIPTION": "Uma vez que sua conta for excluída, todos os seus recursos e dados serão removidos permanentemente.",
+        "DELETE_BUTTON": "Excluir minha conta",
+        "DELETE_MODAL_TITLE": "Você tem certeza que deseja excluir sua conta?",
+        "DELETE_MODAL_DESCRIPTION": "Esta ação é irreversível. Por favor, digite sua senha para confirmar que você deseja excluir permanentemente seus dados.",
+        "CANCEL": "Cancelar",
+        "CONFIRM_DELETE": "Sim, excluir conta",
+        "LABEL_PASSWORD": "Senha",
+        "COPY_LINK": "Copiar Link",
+        "LINK_COPIED": "Copiado!",
+        "EDIT_SLUG": "Alterar Link"
     },
     "AUTH": {
         "LOGIN": "Entrar",
@@ -64,10 +98,14 @@
         "CONFIRMED": "Confirmados",
         "FREE_SLOTS": "Vagos hoje",
         "GREETING": "Bem-vindo",
-        "SUMMARY_TEXT": "Você tem :count solicitações aguardando aprovação."
+        "SUMMARY_TEXT": "Você tem :count solicitações aguardando aprovação.",
+        "GLOBAL_PENDING_TITLE": "Solicitações Pendentes Globais",
+        "NO_PENDING_FOUND": "Nenhuma pendência encontrada"
     },
     "ACTION": {
-        "CONFIRM": "Confirmar"
+        "CONFIRM": "Confirmar",
+        "CANCEL": "Cancelar Consulta",
+        "RESCHEDULE": "Adiar Consulta"
     },
     "MODAL_APPOINTMENT": {
         "TITLE": "Novo Agendamento",
@@ -82,9 +120,17 @@
         "SEARCHING": "Buscando paciente...",
         "SEARCH_BUTTON": "Buscar"
     },
+    "MODAL_RESCHEDULE": {
+        "TITLE": "Adiar Consulta",
+        "NEW_DATE": "Nova Data",
+        "NEW_TIME": "Novo Horário",
+        "SUBMIT": "Confirmar Novo Horário",
+        "UPDATING": "Atualizando..."
+    },
     "BLOCKS": {
         "TITLE": "Bloqueios e Férias",
         "SUBTITLE": "Gerencie ausências e pausas na agenda",
+        "DATE": "Data do Bloqueio",
         "DATE_LABEL": "Data do Bloqueio",
         "FULL_DAY": "Dia Inteiro",
         "START_TIME": "Início",
@@ -103,7 +149,9 @@
         "DELETE_BULK": "Excluir Selecionados",
         "CLEAN_SELECTION": "Limpar Seleção",
         "SELECT_ALL": "Selecionar todos",
-        "SELECTED": "Selecionados"
+        "SELECTED": "Selecionados",
+        "SINGLE_DAY": "Dia Único",
+        "PERIOD_VACATION": "Vários Dias / Férias"
     },
     "DAYS": {
         "MONDAY": "Segunda",
@@ -125,6 +173,7 @@
         "TITLE": "Configurações",
         "CENTER": "Central de Agenda",
         "GRID": "Grade Semanal",
+        "GRID_TITLE": "Minha Grade de Atendimento",
         "BLOCKS": "Bloqueios e Férias",
         "BLOCKS_DESC": "Gerencie férias, feriados ou bloqueios temporários de horários específicos.",
         "MANAGE_NOW": "Gerenciar Bloqueios",
@@ -134,23 +183,38 @@
         "HERO_TITLE_1": "Onde a precisão encontra",
         "HERO_TITLE_2": "o alto padrão."
     },
+    "PUBLIC_PROFILE": {
+        "CONFIRM_TITLE": "Finalizar Agendamento",
+        "CONFIRM_SUBTITLE": "Preencha seus dados para solicitar o horário das :time",
+        "LABEL_NAME": "Seu Nome Completo",
+        "LABEL_CPF": "CPF",
+        "LABEL_PHONE": "WhatsApp / Telefone",
+        "LABEL_EMAIL": "E-mail (Opcional)",
+        "SUBMIT_BUTTON": "Solicitar Agendamento",
+        "SUCCESS_TITLE": "Solicitação Enviada!",
+        "SUCCESS_MESSAGE": "O Dr. analisará sua solicitação e você receberá uma confirmação em breve.",
+        "BACK_TO_SITE": "Voltar ao perfil"
+    },
     "ERRORS": {
         "INVALID_RANGE": "O horário de término deve ser após o de início.",
         "AFTER_START": "O término não pode ser antes ou igual ao início.",
         "OVERLAP": "Este horário conflita com outro já existente na sua grade.",
         "REQUIRED": "Preencha todos os campos corretamente.",
+        "REQUIRED_DATE": "Por favor, selecione uma data válida.",
+        "PAST_DATE": "Não é possível bloquear datas retroativas.",
+        "INVALID_DURATION": "O intervalo deve ser maior que a duração do slot.",
         "REGISTER_FAILED": "Verifique os dados informados e tente novamente.",
         "MIN_PASSWORD": "A senha deve ter pelo menos 8 caracteres"
     },
     "MESSAGES": {
         "SUCCESS": "Sucesso",
         "ERROR": "Erro",
-        "CONFIRM_DELETE": "Deseja realmente remover este horário da sua grade?",
+        "CONFIRM_DELETE": "Deseja realmente remover este item do seu sistema?",
         "SUCCESS_CONFIRM": "Agendamento confirmado com sucesso!",
         "SUCCESS_CANCEL": "Agendamento removido da agenda."
     },
     "PAGINATION": {
-        "NEXT": "Proximo",
+        "NEXT": "Próximo",
         "PREVIOUS": "Anterior"
     },
     "auth.failed": "E-mail ou senha incorretos. Tente novamente.",

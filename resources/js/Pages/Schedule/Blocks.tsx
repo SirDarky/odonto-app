@@ -1,10 +1,10 @@
+import { useTrans } from '@/Hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import { useTrans } from '@/Hooks/useTrans';
 import BlockForm from './Partials/BlockForm';
 import BlockList from './Partials/BlockList';
 
-interface Block {
+export interface Block {
     id: number;
     date: string;
     full_day: boolean;
@@ -12,17 +12,33 @@ interface Block {
     end_time: string | null;
 }
 
-export default function Blocks({ blocks }: { blocks: Block[] }) {
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedBlocks {
+    data: Block[];
+    total: number;
+    links: PaginationLink[];
+}
+
+interface Props {
+    blocks: PaginatedBlocks;
+}
+
+export default function Blocks({ blocks }: Props) {
     const { t } = useTrans();
 
     return (
         <AuthenticatedLayout>
             <Head title={t('BLOCKS.TITLE')} />
 
-            <div className="relative min-h-screen bg-[#FDFBFC] pb-24 selection:bg-rose-100 overflow-hidden">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-50/40 blur-[120px] rounded-full -mr-64 -mt-64 pointer-events-none" />
+            <div className="relative min-h-screen overflow-hidden bg-[#FDFBFC] pb-24 selection:bg-rose-100">
+                <div className="pointer-events-none absolute right-0 top-0 -mr-64 -mt-64 h-[500px] w-[500px] rounded-full bg-rose-50/40 blur-[120px]" />
 
-                <div className="relative max-w-5xl mx-auto px-6 py-6">
+                <div className="relative mx-auto max-w-5xl px-6 py-6">
                     <BlockForm />
                     <BlockList blocks={blocks} />
                 </div>

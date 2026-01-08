@@ -1,11 +1,11 @@
+import CustomInput, { TypeCustomInput } from '@/Components/CustomInput';
+import { ToastType } from '@/Components/Toast';
+import { useToast } from '@/Contexts/ToastContext';
+import { useTrans } from '@/Hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { useTrans } from '@/Hooks/useTrans';
-import { useToast } from '@/Contexts/ToastContext';
-import { ToastType } from '@/Components/Toast';
-import CustomInput, { TypeCustomInput } from '@/Components/CustomInput';
-import logo from '../../images/logo.svg';
 import fluxa from '../../images/fluxa-nome.svg';
+import logo from '../../images/logo.svg';
 
 export default function Login({
     status,
@@ -38,47 +38,49 @@ export default function Login({
 
                 addToast(
                     (firstError as string) || t('ERRORS.LOGIN_FAILED'),
-                    ToastType.ERROR
+                    ToastType.ERROR,
                 );
-            }
+            },
         });
     };
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/50 flex flex-col justify-center items-center p-4 md:p-6">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/50 p-4 md:p-6">
             <Head title={t('AUTH.LOGIN')} />
 
-            <div className="mb-6 md:mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-[1.8rem] md:rounded-[2.2rem] mx-auto mb-4 flex items-center justify-center shadow-2xl shadow-blue-500/10 border border-white p-4 md:p-5 transition-transform hover:scale-105">
+            <div className="animate-in fade-in slide-in-from-top-4 mb-6 text-center duration-700 md:mb-8">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.8rem] border border-white bg-white p-4 shadow-2xl shadow-blue-500/10 transition-transform hover:scale-105 md:h-24 md:w-24 md:rounded-[2.2rem] md:p-5">
                     <img
                         src={logo}
                         alt="Fluxa Logo"
-                        className="w-full h-full object-contain ml-1"
+                        className="ml-1 h-full w-full object-contain"
                     />
                 </div>
 
-                <h1 className="text-3xl font-black text-gray-800 tracking-tighter uppercase">
+                <h1 className="text-3xl font-black uppercase tracking-tighter text-gray-800">
                     <img
                         src={fluxa}
                         alt="Fluxa Logo"
-                        className="w-32 md:w-40 object-contain mx-auto"
+                        className="mx-auto w-32 object-contain md:w-40"
                     />
                 </h1>
-                <p className="text-gray-400 text-sm md:text-base font-medium tracking-tight mt-1 px-4">
+                <p className="mt-1 px-4 text-sm font-medium tracking-tight text-gray-400 md:text-base">
                     {t('AUTH.WELCOME_BACK')}
                 </p>
             </div>
 
-            <div className="w-full max-w-md bg-white p-6 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl shadow-blue-500/5 border border-white/50 relative overflow-hidden">
-
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+            <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/50 bg-white p-6 shadow-2xl shadow-blue-500/5 md:rounded-[3.5rem] md:p-12">
+                <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-blue-50 opacity-50 blur-3xl"></div>
 
                 {status && (
-                    <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl text-sm font-bold text-green-600 animate-in zoom-in-95">
+                    <div className="animate-in zoom-in-95 mb-6 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm font-bold text-green-600">
                         {status}
                     </div>
                 )}
 
-                <form onSubmit={submit} className="relative z-10 space-y-5 md:space-y-6">
+                <form
+                    onSubmit={submit}
+                    className="relative z-10 space-y-5 md:space-y-6"
+                >
                     <CustomInput
                         label={t('AUTH.EMAIL')}
                         type={TypeCustomInput.EMAIL}
@@ -101,7 +103,7 @@ export default function Login({
                             <div className="flex justify-end pr-2">
                                 <Link
                                     href={route('password.request')}
-                                    className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 transition-colors py-1"
+                                    className="py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-blue-600"
                                 >
                                     {t('AUTH.FORGOT_PASSWORD')}
                                 </Link>
@@ -110,15 +112,17 @@ export default function Login({
                     </div>
 
                     <div className="flex items-center px-2">
-                        <label className="flex items-center group cursor-pointer">
+                        <label className="group flex cursor-pointer items-center">
                             <input
                                 type="checkbox"
                                 name="remember"
                                 checked={data.remember}
-                                onChange={(e) => setData('remember', e.target.checked)}
-                                className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-blue-500/20 transition-all cursor-pointer"
+                                onChange={(e) =>
+                                    setData('remember', e.target.checked)
+                                }
+                                className="h-5 w-5 cursor-pointer rounded-lg border-gray-200 text-blue-600 transition-all focus:ring-blue-500/20"
                             />
-                            <span className="ms-3 text-sm font-bold text-gray-400 group-hover:text-gray-600 transition-colors">
+                            <span className="ms-3 text-sm font-bold text-gray-400 transition-colors group-hover:text-gray-600">
                                 {t('AUTH.REMEMBER_ME')}
                             </span>
                         </label>
@@ -127,17 +131,17 @@ export default function Login({
                     <div className="pt-2 md:pt-4">
                         <button
                             disabled={processing}
-                            className="w-full h-14 md:h-16 bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-[1.5rem] md:rounded-[1.8rem] shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                            className="h-14 w-full rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-blue-800 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50 md:h-16 md:rounded-[1.8rem] md:text-xs"
                         >
                             {processing ? '...' : t('AUTH.LOGIN_BUTTON')}
                         </button>
                     </div>
                 </form>
 
-                <div className="mt-8 md:mt-10 text-center relative z-10">
+                <div className="relative z-10 mt-8 text-center md:mt-10">
                     <Link
                         href={route('register')}
-                        className="text-[10px] md:text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest py-2 inline-block"
+                        className="inline-block py-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 transition-colors hover:text-blue-600 md:text-xs"
                     >
                         {t('AUTH.NO_ACCOUNT')}
                     </Link>

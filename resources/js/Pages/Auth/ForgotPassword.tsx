@@ -43,10 +43,16 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     onChange={(e) => setData('email', e.target.value)}
                 />
 
-                <InputError message={errors.email} className="mt-2" />
+                <InputError
+                    message={errors.email}
+                    className="mt-2"
+                />
 
                 <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                    <PrimaryButton
+                        className="ms-4"
+                        disabled={processing}
+                    >
                         Email Password Reset Link
                     </PrimaryButton>
                 </div>

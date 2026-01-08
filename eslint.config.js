@@ -1,5 +1,5 @@
 import js from '@eslint/js';
-import prettier from 'eslint-config-prettier/flat';
+import prettier from 'eslint-plugin-prettier/recommended';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
@@ -8,29 +8,59 @@ import typescript from 'typescript-eslint';
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     js.configs.recommended,
-    reactHooks.configs.flat.recommended,
     ...typescript.configs.recommended,
     {
-        ...react.configs.flat.recommended,
-        ...react.configs.flat['jsx-runtime'], // Required for React 17+
+        files: ['**/*.{js,jsx,ts,tsx}'],
+        plugins: {
+            'react-hooks': reactHooks,
+            react: react,
+        },
         languageOptions: {
             globals: {
                 ...globals.browser,
+                ...globals.node,
+                route: 'readonly',
             },
-        },
-        rules: {
-            'react/react-in-jsx-scope': 'off',
-            'react/prop-types': 'off',
-            'react/no-unescaped-entities': 'off',
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
         },
         settings: {
             react: {
                 version: 'detect',
             },
         },
+        rules: {
+            ...reactHooks.configs.recommended.rules,
+            ...react.configs.recommended.rules,
+            'react/react-in-jsx-scope': 'off',
+            'react/prop-types': 'off',
+            'react/no-unescaped-entities': 'off',
+            'prettier/prettier': [
+                'error',
+                {
+                    singleAttributePerLine: true,
+                    printWidth: 80,
+                    tabWidth: 4,
+                    singleQuote: true,
+                    semi: true,
+                    trailingComma: 'all',
+                    endOfLine: 'auto',
+                },
+            ],
+        },
     },
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
+        ignores: [
+            'vendor/**',
+            'node_modules/**',
+            'public/**',
+            'bootstrap/ssr/**',
+            'tailwind.config.js',
+            'postcss.config.js',
+        ],
     },
-    prettier, // Turn off all rules that might conflict with Prettier
+    prettier,
 ];

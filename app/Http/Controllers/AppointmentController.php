@@ -8,44 +8,83 @@ use App\Models\Patient;
 use App\Models\StandardAvailability;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
 {
+    /**
+     * Armazena um novo agendamento.
+     * Suporta agendamento manual (Dashboard) e público.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'cpf' => 'required|string',
-            'name' => 'required|string',
-            'phone' => 'required|string',
+            'user_id'          => 'required|exists:users,id',
+            'cpf'              => 'required|string',
+            'name'             => 'required|string',
+            'phone'            => 'required|string',
+            'email'            => 'nullable|email',
             'appointment_date' => 'required|date_format:Y-m-d',
-            'start_time' => 'required|date_format:H:i',
+            'start_time'       => 'required|date_format:H:i',
         ]);
 
+        $userId = $validated['user_id'];
+        $date   = $validated['appointment_date'];
+        $time   = $validated['start_time'];
+
         $patient = Patient::updateOrCreate(
-            ['cpf' => preg_replace('/\D/', '', $request->cpf)],
+            ['cpf' => preg_replace('/\D/', '', $validated['cpf'])],
             [
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
+                'name'  => $validated['name'],
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'],
             ]
         );
 
-        $date = $request->appointment_date;
-        $time = $request->start_time;
-        $userId = $request->user_id;
+        $errorMessage = $this->checkAvailability($userId, $date, $time);
+        if ($errorMessage) {
+            return $this->handleError($errorMessage);
+        }
+
+        $status = Auth::check() ? 'scheduled' : 'pending';
+
+        Appointment::create([
+            'user_id'          => $userId,
+            'patient_id'       => $patient->id,
+            'appointment_date' => $date,
+            'start_time'       => $time,
+            'status'           => $status,
+        ]);
+
+        return back()->with('success', 'Agendamento realizado com sucesso!');
+    }
+
+    public function confirm($id)
+    {
+        $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
+        $appointment->update(['status' => 'scheduled']);
+
+        return back()->with('success', 'Agendamento confirmado!');
+    }
+
+    public function cancel($id)
+    {
+        $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
+        $appointment->update(['status' => 'canceled']);
+
+        return back()->with('success', 'Agendamento cancelado.');
+    }
+
+    private function checkAvailability($userId, $date, $time): ?string
+    {
         $dayOfWeek = Carbon::parse($date)->dayOfWeek;
 
-        $slotExists = StandardAvailability::where('user_id', $userId)
+        $inGrid = StandardAvailability::where('user_id', $userId)
             ->where('day_of_week', $dayOfWeek)
             ->where('start_time', $time)
             ->where('active', true)
             ->exists();
-
-        if (! $slotExists) {
-            return response()->json(['message' => 'Este horário não faz parte da agenda do dentista.'], 422);
-        }
+        if (!$inGrid) return 'Este horário não faz parte da sua grade de atendimento.';
 
         $isBlocked = Block::where('user_id', $userId)
             ->where('date', $date)
@@ -56,80 +95,20 @@ class AppointmentController extends Controller
                             ->where('end_time', '>', $time);
                     });
             })->exists();
-
-        if ($isBlocked) {
-            return response()->json(['message' => 'O dentista bloqueou este horário para este dia.'], 422);
-        }
+        if ($isBlocked) return 'Você bloqueou este horário para este dia.';
 
         $hasConflict = Appointment::where('user_id', $userId)
             ->where('appointment_date', $date)
             ->where('start_time', $time)
-            ->where('status', 'scheduled')
+            ->whereIn('status', ['scheduled', 'pending'])
             ->exists();
+        if ($hasConflict) return 'Já existe um paciente agendado para este horário.';
 
-        if ($hasConflict) {
-            return response()->json(['message' => 'Este horário já foi preenchido.'], 422);
-        }
-
-        $appointment = Appointment::create([
-            'user_id' => $userId,
-            'patient_id' => $patient->id,
-            'appointment_date' => $date,
-            'start_time' => $time,
-            'status' => 'scheduled',
-        ]);
-
-        return response()->json([
-            'message' => 'Agendado com sucesso!',
-            'data' => $appointment,
-        ], 201);
+        return null;
     }
 
-    public function availableSlots(Request $request)
+    private function handleError(string $message)
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'date' => 'required|date_format:Y-m-d',
-        ]);
-
-        $userId = $request->user_id;
-        $date = $request->date;
-        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
-
-        $allSlots = StandardAvailability::where('user_id', $userId)
-            ->where('day_of_week', $dayOfWeek)
-            ->where('active', true)
-            ->get(['start_time', 'end_time']);
-
-        $bookedSlots = Appointment::where('user_id', $userId)
-            ->where('appointment_date', $date)
-            ->where('status', 'scheduled')
-            ->pluck('start_time')
-            ->toArray();
-
-        $blocks = Block::where('user_id', $userId)
-            ->where('date', $date)
-            ->get();
-
-        $availableSlots = $allSlots->filter(function ($slot) use ($bookedSlots, $blocks) {
-            $time = $slot->start_time;
-
-            if (in_array($time, $bookedSlots)) {
-                return false;
-            }
-
-            foreach ($blocks as $block) {
-                if ($block->full_day) {
-                    return false;
-                }
-                if ($time >= $block->start_time && $time < $block->end_time) {
-                    return false;
-                }
-            }
-
-            return true;
-        })->values();
-
-        return response()->json($availableSlots);
+        return back()->withErrors(['start_time' => $message]);
     }
 }

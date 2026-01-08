@@ -1,18 +1,18 @@
+import CustomInput, { TypeCustomInput } from '@/Components/CustomInput';
+import { ToastType } from '@/Components/Toast';
+import { useToast } from '@/Contexts/ToastContext';
+import { useTrans } from '@/Hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { useTrans } from '@/Hooks/useTrans';
-import { useToast } from '@/Contexts/ToastContext';
-import { ToastType } from '@/Components/Toast';
-import CustomInput, { TypeCustomInput } from '@/Components/CustomInput';
-import logo from '../../images/logo.svg';
 import fluxa from '../../images/fluxa-nome.svg';
+import logo from '../../images/logo.svg';
 
 export default function Register() {
     const { t } = useTrans();
     const { addToast } = useToast();
     const [step, setStep] = useState(1);
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         name: '',
         email: '',
         password: '',
@@ -26,8 +26,15 @@ export default function Register() {
         clearErrors();
 
         if (step === 1) {
-            const step1Fields = ['name', 'email', 'password', 'password_confirmation'];
-            const hasEmpty = step1Fields.some(field => !data[field as keyof typeof data]);
+            const step1Fields = [
+                'name',
+                'email',
+                'password',
+                'password_confirmation',
+            ];
+            const hasEmpty = step1Fields.some(
+                (field) => !data[field as keyof typeof data],
+            );
 
             if (hasEmpty) {
                 addToast(t('ERRORS.REQUIRED'), ToastType.ERROR);
@@ -47,7 +54,9 @@ export default function Register() {
 
         if (step === 2) {
             const step2Fields = ['cro', 'cro_state', 'phone'];
-            const hasEmpty = step2Fields.some(field => !data[field as keyof typeof data]);
+            const hasEmpty = step2Fields.some(
+                (field) => !data[field as keyof typeof data],
+            );
 
             if (hasEmpty) {
                 addToast(t('ERRORS.REQUIRED'), ToastType.ERROR);
@@ -73,35 +82,52 @@ export default function Register() {
             onSuccess: () => addToast(t('SUCCESS.REGISTER'), ToastType.SUCCESS),
             onError: (err) => {
                 const firstError = Object.values(err)[0];
-                addToast(firstError || t('ERRORS.REGISTER_FAILED'), ToastType.ERROR);
-            }
+                addToast(
+                    firstError || t('ERRORS.REGISTER_FAILED'),
+                    ToastType.ERROR,
+                );
+            },
         });
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/50 flex flex-col justify-center items-center p-4 md:p-6">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/50 p-4 md:p-6">
             <Head title={t('AUTH.CREATE_ACCOUNT')} />
 
-            <div className="mb-6 md:mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-[1.5rem] md:rounded-[1.8rem] mx-auto mb-4 flex items-center justify-center shadow-2xl shadow-blue-500/10 border border-white p-3 md:p-4">
-                    <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            <div className="animate-in fade-in slide-in-from-top-4 mb-6 text-center duration-700 md:mb-8">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.5rem] border border-white bg-white p-3 shadow-2xl shadow-blue-500/10 md:h-20 md:w-20 md:rounded-[1.8rem] md:p-4">
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        className="h-full w-full object-contain"
+                    />
                 </div>
-                <img src={fluxa} alt="Fluxa" className="w-24 md:w-32 object-contain mx-auto" />
+                <img
+                    src={fluxa}
+                    alt="Fluxa"
+                    className="mx-auto w-24 object-contain md:w-32"
+                />
 
-                <div className="flex items-center justify-center space-x-2 mt-4 md:mt-6">
-                    <div className={`h-1.5 rounded-full transition-all duration-500 ${step === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-gray-200'}`} />
-                    <div className={`h-1.5 rounded-full transition-all duration-500 ${step === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-gray-200'}`} />
+                <div className="mt-4 flex items-center justify-center space-x-2 md:mt-6">
+                    <div
+                        className={`h-1.5 rounded-full transition-all duration-500 ${step === 1 ? 'w-8 bg-blue-600' : 'w-2 bg-gray-200'}`}
+                    />
+                    <div
+                        className={`h-1.5 rounded-full transition-all duration-500 ${step === 2 ? 'w-8 bg-blue-600' : 'w-2 bg-gray-200'}`}
+                    />
                 </div>
             </div>
 
-            <div className="w-full max-w-md bg-white p-6 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl shadow-blue-500/5 border border-white/50 relative overflow-hidden">
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+            <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/50 bg-white p-6 shadow-2xl shadow-blue-500/5 md:rounded-[3.5rem] md:p-12">
+                <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-blue-50 opacity-50 blur-3xl"></div>
 
-                <form onSubmit={submit} className="relative z-10 space-y-4 md:space-y-5">
-
+                <form
+                    onSubmit={submit}
+                    className="relative z-10 space-y-4 md:space-y-5"
+                >
                     {step === 1 && (
-                        <div className="space-y-4 md:space-y-5 animate-in slide-in-from-left-4 duration-500">
-                            <h2 className="text-lg md:text-xl font-black text-gray-800 tracking-tight uppercase px-1">
+                        <div className="animate-in slide-in-from-left-4 space-y-4 duration-500 md:space-y-5">
+                            <h2 className="px-1 text-lg font-black uppercase tracking-tight text-gray-800 md:text-xl">
                                 {t('AUTH.PERSONAL_INFO')}
                             </h2>
                             <CustomInput
@@ -119,7 +145,7 @@ export default function Register() {
                                 error={errors.email}
                                 placeholder="contato@fluxa.com"
                             />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <CustomInput
                                     label={t('AUTH.PASSWORD')}
                                     type={TypeCustomInput.PASSWORD}
@@ -132,7 +158,9 @@ export default function Register() {
                                     label={t('AUTH.CONFIRM')}
                                     type={TypeCustomInput.PASSWORD}
                                     value={data.password_confirmation}
-                                    onChange={(val) => setData('password_confirmation', val)}
+                                    onChange={(val) =>
+                                        setData('password_confirmation', val)
+                                    }
                                     error={errors.password_confirmation}
                                     placeholder="••••••••"
                                 />
@@ -141,8 +169,8 @@ export default function Register() {
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-4 md:space-y-5 animate-in slide-in-from-right-4 duration-500">
-                            <h2 className="text-lg md:text-xl font-black text-gray-800 tracking-tight uppercase px-1">
+                        <div className="animate-in slide-in-from-right-4 space-y-4 duration-500 md:space-y-5">
+                            <h2 className="px-1 text-lg font-black uppercase tracking-tight text-gray-800 md:text-xl">
                                 {t('AUTH.PROFESSIONAL_INFO')}
                             </h2>
                             <div className="grid grid-cols-3 gap-3 md:gap-4">
@@ -158,7 +186,9 @@ export default function Register() {
                                 <CustomInput
                                     label="UF"
                                     value={data.cro_state}
-                                    onChange={(val) => setData('cro_state', val.toUpperCase())}
+                                    onChange={(val) =>
+                                        setData('cro_state', val.toUpperCase())
+                                    }
                                     error={errors.cro_state}
                                     placeholder="SP"
                                 />
@@ -174,20 +204,24 @@ export default function Register() {
                         </div>
                     )}
 
-                    <div className="pt-2 md:pt-4 flex flex-col gap-3 md:gap-4">
+                    <div className="flex flex-col gap-3 pt-2 md:gap-4 md:pt-4">
                         <button
                             type="submit"
                             disabled={processing}
-                            className="w-full h-14 md:h-16 bg-gradient-to-br from-blue-600 to-blue-800 text-white font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-[1.5rem] md:rounded-[1.8rem] shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                            className="h-14 w-full rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-blue-800 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50 md:h-16 md:rounded-[1.8rem] md:text-xs"
                         >
-                            {step === 1 ? t('AUTH.NEXT') : (processing ? '...' : t('AUTH.FINISH'))}
+                            {step === 1
+                                ? t('AUTH.NEXT')
+                                : processing
+                                  ? '...'
+                                  : t('AUTH.FINISH')}
                         </button>
 
                         {step === 2 && (
                             <button
                                 type="button"
                                 onClick={() => setStep(1)}
-                                className="text-[10px] md:text-xs font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors py-2"
+                                className="py-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 transition-colors hover:text-gray-600 md:text-xs"
                             >
                                 {t('AUTH.BACK')}
                             </button>
@@ -195,10 +229,10 @@ export default function Register() {
                     </div>
                 </form>
 
-                <div className="mt-8 text-center relative z-10">
+                <div className="relative z-10 mt-8 text-center">
                     <Link
                         href={route('login')}
-                        className="text-[10px] md:text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                        className="text-[10px] font-bold uppercase tracking-widest text-gray-400 transition-colors hover:text-blue-600 md:text-xs"
                     >
                         {t('AUTH.ALREADY_REGISTERED')}
                     </Link>

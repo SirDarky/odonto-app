@@ -34,8 +34,8 @@ export default function Authenticated({
                                     Dashboard
                                 </NavLink>
                                 <NavLink
-                                    href={route('schedule.settings.index')}
-                                    active={route().current('schedule.settings.index')}
+                                    href={route('schedule.index')}
+                                    active={route().current('schedule.index')}
                                 >
                                     Agendamento
                                 </NavLink>

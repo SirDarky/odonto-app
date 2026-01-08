@@ -61,7 +61,10 @@ export default function UpdatePasswordForm({
                 </p>
             </header>
 
-            <form onSubmit={updatePassword} className="mt-6 space-y-6">
+            <form
+                onSubmit={updatePassword}
+                className="mt-6 space-y-6"
+            >
                 <div>
                     <InputLabel
                         htmlFor="current_password"
@@ -87,7 +90,10 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                    <InputLabel
+                        htmlFor="password"
+                        value="New Password"
+                    />
 
                     <TextInput
                         id="password"
@@ -99,7 +105,10 @@ export default function UpdatePasswordForm({
                         autoComplete="new-password"
                     />
 
-                    <InputError message={errors.password} className="mt-2" />
+                    <InputError
+                        message={errors.password}
+                        className="mt-2"
+                    />
                 </div>
 
                 <div>
@@ -135,9 +144,7 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
+                        <p className="text-sm text-gray-600">Saved.</p>
                     </Transition>
                 </div>
             </form>

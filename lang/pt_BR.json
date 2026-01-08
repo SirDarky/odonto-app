@@ -3,12 +3,9 @@
         "SETTINGS": "Configuração",
         "TITLE": "Configurar Horários",
         "ACTIVE_GRID": "Sua Grade Ativa",
-        "ADD_BUTTON": "Adicionar",
         "START": "Início",
         "END": "Término",
         "DAY_OF_WEEK": "Dia da Semana",
-        "PAGE_TITLE": "Agendamento",
-        "LABEL_TIME": "Horário",
         "CENTER": "Agenda & Disponibilidade",
         "GRID": "Grade de Horários",
         "GRID_DESC": "Defina seus turnos e horários padrão de atendimento para a clínica.",
@@ -18,7 +15,20 @@
         "TIPS_DESC": "Sincronize seus bloqueios para garantir que nenhum agendamento ocorra em seus períodos de descanso.",
         "INTRO_TEXT": "Agilidade, inteligência e sofisticação na gestão odontológica.",
         "NO_DATA": "Nenhum resultado encontrado",
-        "REMOVE": "Remover"
+        "REMOVE": "Remover",
+        "PAGE_TITLE": "Configuração de Agenda",
+        "SHIFT_START": "Início do Turno",
+        "SHIFT_END": "Fim do Turno",
+        "GENERATOR": "Gerador de Slots",
+        "INDIVIDUAL": "Individual",
+        "ACTION_GENERATE": "Gerar Grade",
+        "ACTION_ADD": "Adicionar",
+        "SESSION_DURATION": "Duração da Sessão",
+        "BULK_HELPER": "O Fluxa criará slots automáticos neste intervalo",
+        "SLOT_ACTIVE": "Slot Ativo",
+        "SLOTS_ACTIVE": "Slots Ativos",
+        "LABEL_TIME": "Horário Disponível",
+        "ADD_BUTTON": "Adicionar Horário"
     },
     "AUTH": {
         "LOGIN": "Entrar",
@@ -45,6 +55,32 @@
         "REGISTER_BUTTON": "Finalizar Cadastro",
         "ALREADY_HAVE_ACCOUNT": "Já possui conta? Faça o login",
         "ALREADY_REGISTERED": "Já possui conta? Faça o login"
+    },
+    "DASHBOARD": {
+        "AGENDA": "Minha Agenda",
+        "BLOCKED": "Horário Bloqueado",
+        "AVAILABLE": "Livre para agendamento",
+        "PENDING": "Pendentes",
+        "CONFIRMED": "Confirmados",
+        "FREE_SLOTS": "Vagos hoje",
+        "GREETING": "Bem-vindo",
+        "SUMMARY_TEXT": "Você tem :count solicitações aguardando aprovação."
+    },
+    "ACTION": {
+        "CONFIRM": "Confirmar"
+    },
+    "MODAL_APPOINTMENT": {
+        "TITLE": "Novo Agendamento",
+        "PATIENT_NAME": "Nome do Paciente",
+        "PATIENT_NAME_PLACEHOLDER": "Ex: João Silva",
+        "CPF_LABEL": "CPF (Busca Automática)",
+        "PHONE_LABEL": "Telefone",
+        "EMAIL_LABEL": "E-mail",
+        "EMAIL_PLACEHOLDER": "Opcional",
+        "SUBMIT": "Confirmar Agendamento",
+        "SAVING": "Salvando...",
+        "SEARCHING": "Buscando paciente...",
+        "SEARCH_BUTTON": "Buscar"
     },
     "BLOCKS": {
         "TITLE": "Bloqueios e Férias",
@@ -109,7 +145,9 @@
     "MESSAGES": {
         "SUCCESS": "Sucesso",
         "ERROR": "Erro",
-        "CONFIRM_DELETE": "Deseja realmente remover este horário da sua grade?"
+        "CONFIRM_DELETE": "Deseja realmente remover este horário da sua grade?",
+        "SUCCESS_CONFIRM": "Agendamento confirmado com sucesso!",
+        "SUCCESS_CANCEL": "Agendamento removido da agenda."
     },
     "PAGINATION": {
         "NEXT": "Proximo",

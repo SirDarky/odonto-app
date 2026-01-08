@@ -41,9 +41,15 @@ export default function UpdateProfileInformation({
                 </p>
             </header>
 
-            <form onSubmit={submit} className="mt-6 space-y-6">
+            <form
+                onSubmit={submit}
+                className="mt-6 space-y-6"
+            >
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel
+                        htmlFor="name"
+                        value="Name"
+                    />
 
                     <TextInput
                         id="name"
@@ -55,11 +61,17 @@ export default function UpdateProfileInformation({
                         autoComplete="name"
                     />
 
-                    <InputError className="mt-2" message={errors.name} />
+                    <InputError
+                        className="mt-2"
+                        message={errors.name}
+                    />
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel
+                        htmlFor="email"
+                        value="Email"
+                    />
 
                     <TextInput
                         id="email"
@@ -71,7 +83,10 @@ export default function UpdateProfileInformation({
                         autoComplete="username"
                     />
 
-                    <InputError className="mt-2" message={errors.email} />
+                    <InputError
+                        className="mt-2"
+                        message={errors.email}
+                    />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
@@ -107,9 +122,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
+                        <p className="text-sm text-gray-600">Saved.</p>
                     </Transition>
                 </div>
             </form>

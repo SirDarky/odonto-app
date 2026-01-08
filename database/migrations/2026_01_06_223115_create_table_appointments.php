@@ -17,12 +17,11 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained()->onDelete('cascade');
             $table->date('appointment_date');
             $table->time('start_time');
-            $table->enum('status', ['scheduled', 'completed', 'canceled'])->default('scheduled');
+            $table->enum('status', ['pending', 'scheduled', 'completed', 'canceled'])->default('pending');
             $table->timestamps();
 
             $table->index(['user_id', 'appointment_date', 'start_time']);
         });
-
     }
 
     /**

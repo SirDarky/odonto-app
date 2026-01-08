@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
     label: string;
@@ -8,35 +8,46 @@ interface Props {
     error?: string;
 }
 
-export default function TimeSelect({ label, value, onChange, options, error }: Props) {
+export default function TimeSelect({
+    label,
+    value,
+    onChange,
+    options,
+    error,
+}: Props) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const filteredOptions = options.filter(time =>
-        time.includes(searchTerm)
-    );
+    const filteredOptions = options.filter((time) => time.includes(searchTerm));
 
     return (
-        <div className="md:col-span-3 flex flex-col relative" ref={containerRef}>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 ml-1">
+        <div
+            className="relative flex flex-col md:col-span-3"
+            ref={containerRef}
+        >
+            <label className="mb-2 ml-1 text-xs font-bold uppercase tracking-wider text-gray-500">
                 {label}
             </label>
 
             <div className="relative">
                 <input
                     type="text"
-                    className={`h-12 w-full border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition-all bg-white px-4 pr-12 text-gray-700 outline-none font-mono ${error ? 'border-red-400' : ''}`}
+                    className={`h-12 w-full rounded-xl border-gray-200 bg-white px-4 pr-12 font-mono text-gray-700 shadow-sm outline-none transition-all focus:ring-2 focus:ring-blue-500 ${error ? 'border-red-400' : ''}`}
                     placeholder="00:00"
                     value={isOpen ? searchTerm : value}
                     onFocus={() => {
@@ -47,21 +58,32 @@ export default function TimeSelect({ label, value, onChange, options, error }: P
                 />
 
                 {/* Ícone de Relógio */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 border-l border-gray-100 pl-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 border-l border-gray-100 pl-3 text-gray-400">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                     </svg>
                 </div>
 
                 {/* Lista de Sugestões */}
                 {isOpen && (
-                    <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto rounded-xl bg-white border border-gray-100 shadow-xl py-2 scrollbar-hide">
+                    <div className="scrollbar-hide absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white py-2 shadow-xl">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((time) => (
                                 <button
                                     key={time}
                                     type="button"
-                                    className="w-full text-left px-4 py-2 hover:bg-blue-50 hover:text-blue-700 transition-colors font-mono text-gray-700"
+                                    className="w-full px-4 py-2 text-left font-mono text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
                                     onClick={() => {
                                         onChange(time);
                                         setIsOpen(false);
@@ -72,13 +94,19 @@ export default function TimeSelect({ label, value, onChange, options, error }: P
                                 </button>
                             ))
                         ) : (
-                            <div className="px-4 py-2 text-xs text-gray-400">Nenhum horário encontrado</div>
+                            <div className="px-4 py-2 text-xs text-gray-400">
+                                Nenhum horário encontrado
+                            </div>
                         )}
                     </div>
                 )}
             </div>
 
-            {error && <span className="text-red-500 text-[10px] mt-1 font-semibold">{error}</span>}
+            {error && (
+                <span className="mt-1 text-[10px] font-semibold text-red-500">
+                    {error}
+                </span>
+            )}
         </div>
     );
 }

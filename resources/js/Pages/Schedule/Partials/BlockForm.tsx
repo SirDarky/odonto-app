@@ -177,15 +177,18 @@ export default function BlockForm() {
                                         value={data.start_time}
                                         options={timeOptions}
                                         onChange={(v) =>
-                                            setData('start_time', v)
+                                            setData('start_time', String(v))
                                         }
                                         isTime
                                     />
+
                                     <CustomAutocomplete
                                         label={t('BLOCKS.END_TIME')}
                                         value={data.end_time}
                                         options={timeOptions}
-                                        onChange={(v) => setData('end_time', v)}
+                                        onChange={(v) =>
+                                            setData('end_time', String(v))
+                                        }
                                         isTime
                                     />
                                 </motion.div>

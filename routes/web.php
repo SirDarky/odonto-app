@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-require __DIR__ . '/auth.php';
+//require __DIR__ . '/auth.php';
 
 // 4. PÁGINA PÚBLICA DO DENTISTA (Sempre por ÚLTIMO)
 Route::middleware(['throttle:10,1'])->group(function () {

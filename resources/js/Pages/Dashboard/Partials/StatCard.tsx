@@ -4,11 +4,19 @@ interface StatCardProps {
     label: string;
     value: number;
     icon: ReactNode;
+    className?: string;
 }
 
-export default function StatCard({ label, value, icon }: StatCardProps) {
+export default function StatCard({
+    label,
+    value,
+    icon,
+    className = '',
+}: StatCardProps) {
     return (
-        <div className="flex items-center gap-4 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+        <div
+            className={`flex items-center gap-4 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-md ${className}`}
+        >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50">
                 {icon}
             </div>

@@ -6,96 +6,74 @@ use App\Models\Appointment;
 use App\Models\Block;
 use App\Models\Patient;
 use App\Models\StandardAvailability;
+use App\Traits\HandlesTimezone;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use Stevebauman\Location\Facades\Location;
 
 class AppointmentController extends Controller
 {
+    use HandlesTimezone;
+
     public function store(Request $request)
     {
         if ($request->filled('website_url')) {
             return back()->with('success', 'Agendamento processado.');
         }
 
-        $validated = $request->validate([
+        $cleanCpf = preg_replace('/\D/', '', $request->cpf);
+        $existingPatient = Patient::where('cpf', $cleanCpf)->first();
+
+        $rules = [
             'user_id'          => 'required|exists:users,id',
-            'cpf'              => 'required|string|min:11|max:14',
-            'name'             => 'required|string|min:3|max:100',
-            'phone'            => 'required|string|min:10',
-            'email'            => 'nullable|email',
+            'cpf'              => 'required|string|min:11',
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time'       => 'required|date_format:H:i',
-        ]);
+        ];
 
-        $ip = $request->ip();
-        $position = Location::get($ip);
-        $utc = 'UTC';
-        $patientTz = $position ? $position->timezone : $utc;
+        if (!$existingPatient) {
+            $rules['name'] = 'required|string|min:3|max:100';
+            $rules['phone'] = 'required|string|min:10';
+            $rules['email'] = 'required|email';
+        }
 
-        $patientDateTime = Carbon::createFromFormat(
-            'Y-m-d H:i',
-            $validated['appointment_date'] . ' ' . $validated['start_time'],
-            $patientTz
-        );
+        $validated = $request->validate($rules);
 
-        $utcDateTime = $patientDateTime->copy()->tz('UTC');
-
-        $dateUtc = $utcDateTime->format('Y-m-d');
-        $timeUtc = $utcDateTime->format('H:i:s');
-
-        $key = 'booking-attempt:' . $ip;
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            throw ValidationException::withMessages([
-                'start_time' => 'Muitas tentativas. Aguarde um momento.',
+        if ($existingPatient) {
+            $patient = $existingPatient;
+        } else {
+            $patient = Patient::create([
+                'cpf'   => $cleanCpf,
+                'name'  => strip_tags($validated['name']),
+                'phone' => preg_replace('/\D/', '', $validated['phone']),
+                'email' => $validated['email'] ?? null,
             ]);
         }
-        RateLimiter::hit($key, 60);
 
-        $cleanCpf = preg_replace('/\D/', '', $validated['cpf']);
-        $patient = Patient::updateOrCreate(
-            ['cpf' => $cleanCpf],
-            [
-                'name'  => strip_tags($validated['name']),
-                'email' => filter_var($validated['email'], FILTER_SANITIZE_EMAIL) ?: null,
-                'phone' => preg_replace('/\D/', '', $validated['phone']),
-            ]
-        );
+        $utcData = $this->convertToUtc($validated['appointment_date'], $validated['start_time'], $request);
 
-        $errorMessage = $this->checkAvailability($validated['user_id'], $dateUtc, $timeUtc);
+        $errorMessage = $this->checkAvailability($validated['user_id'], $utcData['date'], $utcData['time']);
         if ($errorMessage) {
             return back()->withErrors(['start_time' => $errorMessage]);
         }
 
-        $status = Auth::check() ? 'scheduled' : 'pending';
-
         Appointment::create([
             'user_id'          => $validated['user_id'],
             'patient_id'       => $patient->id,
-            'appointment_date' => $dateUtc,
-            'start_time'       => $timeUtc,
-            'status'           => $status,
+            'appointment_date' => $utcData['date'],
+            'start_time'       => $utcData['time'],
+            'status'           => Auth::check() ? 'scheduled' : 'pending',
         ]);
 
         return back()->with('success', 'Agendamento realizado com sucesso!');
-    }
-
-    public function confirm($id)
-    {
-        $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
-        $appointment->update(['status' => 'scheduled']);
-
-        return back()->with('success', 'Agendamento confirmado!');
     }
 
     public function cancel($id)
     {
         $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
         $appointment->update(['status' => 'canceled']);
-
         return back()->with('success', 'Agendamento cancelado.');
     }
 
@@ -108,10 +86,16 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
 
+        $utcData = $this->convertToUtc(
+            $validated['appointment_date'],
+            $validated['start_time'],
+            $request
+        );
+
         $errorMessage = $this->checkAvailability(
             $appointment->user_id,
-            $validated['appointment_date'],
-            $validated['start_time']
+            $utcData['date'],
+            $utcData['time']
         );
 
         if ($errorMessage) {
@@ -119,12 +103,49 @@ class AppointmentController extends Controller
         }
 
         $appointment->update([
-            'appointment_date' => $validated['appointment_date'],
-            'start_time'       => $validated['start_time'],
+            'appointment_date' => $utcData['date'],
+            'start_time'       => $utcData['time'],
             'status'           => 'scheduled'
         ]);
 
         return back()->with('success', 'Consulta adiada com sucesso!');
+    }
+
+    public function getCancelledHistory(Request $request)
+    {
+        $user = Auth::user();
+        $tz = $this->getLocalTimezone($request);
+
+        $cancelled = Appointment::where('user_id', $user->id)
+            ->where('status', 'canceled')
+            ->with('patient')
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
+        $cancelled->getCollection()->transform(function ($app) use ($tz) {
+            $dtLocal = Carbon::parse($app->appointment_date . ' ' . $app->start_time, 'UTC')->tz($tz);
+            return [
+                'id' => $app->id,
+                'patient_id' => $app->patient_id,
+                'patient_name' => $app->patient->name,
+                'date' => $dtLocal->format('Y-m-d'),
+                'formatted_date' => $dtLocal->translatedFormat('d \d\e M'),
+                'time' => $dtLocal->format('H:i'),
+                'cancelled_at' => $app->updated_at->tz($tz)->diffForHumans(),
+            ];
+        });
+
+        return response()->json($cancelled);
+    }
+
+    public function confirm($id)
+    {
+        $appointment = Appointment::where('user_id', Auth::id())->findOrFail($id);
+
+        $appointment->update([
+            'status' => 'scheduled'
+        ]);
+
+        return back()->with('success', 'Consulta confirmada com sucesso!');
     }
 
     private function checkAvailability($userId, $date, $time): ?string
@@ -139,7 +160,7 @@ class AppointmentController extends Controller
 
         $inGrid = StandardAvailability::where('user_id', $userId)
             ->where('day_of_week', $dayOfWeek)
-            ->where('start_time', $time)
+            ->whereTime('start_time', '=', $time)
             ->where('active', true)
             ->exists();
 
@@ -164,7 +185,7 @@ class AppointmentController extends Controller
         $hasConflict = Appointment::where('user_id', $userId)
             ->where('appointment_date', $date)
             ->where('start_time', $time)
-            ->whereIn('status', ['scheduled', 'pending'])
+            ->whereIn('status', ['scheduled', 'pending', 'confirmed'])
             ->exists();
 
         if ($hasConflict) {

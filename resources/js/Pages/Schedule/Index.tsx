@@ -74,7 +74,7 @@ export default function Index() {
                             className="flex h-full"
                         >
                             <PremiumCard
-                                color="indigo"
+                                color="emerald"
                                 href={route('schedule.settings.index')}
                                 title={t('SCHEDULE.GRID')}
                                 description={t('SCHEDULE.GRID_DESC')}
@@ -92,7 +92,7 @@ export default function Index() {
                             className="flex h-full"
                         >
                             <PremiumCard
-                                color="emerald"
+                                color="rose"
                                 href={route('schedule.blocks.index')}
                                 title={t('SCHEDULE.BLOCKS')}
                                 description={t('SCHEDULE.BLOCKS_DESC')}
@@ -110,7 +110,7 @@ export default function Index() {
                             className="flex h-full"
                         >
                             <PremiumCard
-                                color="amber"
+                                color="indigo"
                                 href="#"
                                 title={t('SETTINGS.TITLE')}
                                 description={t('SETTINGS.TIPS_DESC')}

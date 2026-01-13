@@ -7,6 +7,8 @@ export interface User {
     specialty: string | null;
     bio: string | null;
     avatar_path: string | null;
+    google_maps_link: string | null;
+    address: string | null;
 }
 
 export type PageProps<
@@ -14,5 +16,9 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+    };
+    flash: {
+        success: string | boolean | null;
+        error: string | null;
     };
 };

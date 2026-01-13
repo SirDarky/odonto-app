@@ -5,7 +5,7 @@ import { useTrans } from '@/Hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
-import { CalendarDays, Sparkles } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Sparkles, Trash2 } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import AvailabilityCard from './Partials/AvailabilityCard';
 
@@ -33,8 +33,8 @@ export default function Settings({ availabilities }: Props) {
     const { addToast } = useToast();
     const [isBulk, setIsBulk] = useState(true);
     const [slotDuration, setSlotDuration] = useState(30);
-    // Estado para controlar se algum dropdown interno está aberto
     const [isAnyDropdownOpen, setIsAnyDropdownOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
@@ -100,12 +100,10 @@ export default function Settings({ availabilities }: Props) {
     const submit = async (e: FormEvent) => {
         e.preventDefault();
         clearErrors();
-
         if (!data.start_time || !data.end_time) {
             addToast(t('ERRORS.REQUIRED'), ToastType.ERROR);
             return;
         }
-
         if (data.start_time >= data.end_time) {
             addToast(t('ERRORS.AFTER_START'), ToastType.ERROR);
             return;
@@ -141,30 +139,77 @@ export default function Settings({ availabilities }: Props) {
             current += slotDuration;
         }
 
-        let completedCount = 0;
-        slotsToGenerate.forEach((slot) => {
-            router.post(route('schedule.settings.store'), slot, {
+        if (slotsToGenerate.length === 0) return;
+
+        router.post(
+            route('schedule.settings.store-bulk'),
+            { slots: slotsToGenerate },
+            {
                 preserveScroll: true,
-                preserveState: true,
                 onSuccess: () => {
-                    completedCount++;
-                    if (completedCount === slotsToGenerate.length) {
-                        addToast(t('SUCCESS.ADDED'), ToastType.SUCCESS);
-                        reset('start_time', 'end_time');
-                        router.reload({ only: ['availabilities'] });
-                    }
+                    addToast(t('SUCCESS.ADDED'), ToastType.SUCCESS);
+                    reset('start_time', 'end_time');
+                    router.reload({ only: ['availabilities'] });
                 },
-            });
-        });
+                onError: (err) => {
+                    const firstError = Object.values(err)[0] as string;
+                    addToast(firstError, ToastType.ERROR);
+                },
+            },
+        );
     };
 
     const handleRemove = (id: number) => {
         if (confirm(t('MESSAGES.CONFIRM_DELETE'))) {
             router.delete(route('schedule.settings.destroy', id), {
                 preserveScroll: true,
-                onSuccess: () =>
-                    addToast(t('SUCCESS.REMOVED'), ToastType.SUCCESS),
+                onSuccess: () => {
+                    addToast(t('SUCCESS.REMOVED'), ToastType.SUCCESS);
+                    setSelectedIds((prev) =>
+                        prev.filter((selectedId) => selectedId !== id),
+                    );
+                },
             });
+        }
+    };
+
+    const handleBulkRemove = () => {
+        if (selectedIds.length === 0) return;
+
+        if (confirm(t('MESSAGES.CONFIRM_DELETE'))) {
+            const idsToDelete = [...selectedIds];
+            setSelectedIds([]);
+
+            router.delete(route('schedule.settings.bulk-destroy'), {
+                data: { ids: idsToDelete },
+                preserveScroll: true,
+                onSuccess: () => {
+                    addToast(t('SUCCESS.REMOVED'), ToastType.SUCCESS);
+                },
+                onError: () => {
+                    setSelectedIds(idsToDelete);
+                    addToast(t('MESSAGES.ERROR'), ToastType.ERROR);
+                },
+            });
+        }
+    };
+
+    const toggleSelect = (id: number) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+        );
+    };
+
+    const toggleSelectDay = (daySlots: number[]) => {
+        const allSelected = daySlots.every((id) => selectedIds.includes(id));
+        if (allSelected) {
+            setSelectedIds((prev) =>
+                prev.filter((id) => !daySlots.includes(id)),
+            );
+        } else {
+            setSelectedIds((prev) =>
+                Array.from(new Set([...prev, ...daySlots])),
+            );
         }
     };
 
@@ -174,7 +219,44 @@ export default function Settings({ availabilities }: Props) {
 
             <div className="relative min-h-screen bg-[#FBFDFF] pb-32">
                 <div className="relative mx-auto max-w-7xl px-6 py-12">
-                    {/* Container do Formulário com Z-index superior quando aberto */}
+                    {/* BARRA DE SELEÇÃO EM MASSA */}
+                    <AnimatePresence>
+                        {selectedIds.length > 0 && (
+                            <motion.div
+                                initial={{ y: 100, x: '-50%', opacity: 0 }}
+                                animate={{ y: 0, x: '-50%', opacity: 1 }}
+                                exit={{ y: 100, x: '-50%', opacity: 0 }}
+                                className="fixed bottom-10 left-1/2 z-[100] flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/95 p-2 pr-6 shadow-2xl backdrop-blur-md"
+                            >
+                                <div className="flex items-center gap-4 rounded-xl bg-slate-800/50 px-6 py-3">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                            {t('BLOCKS.SELECTED')}
+                                        </span>
+                                        <span className="text-lg font-black leading-none text-white">
+                                            {selectedIds.length}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleBulkRemove}
+                                    className="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-white transition-all hover:bg-red-600 active:scale-95"
+                                >
+                                    <Trash2 size={14} />
+                                    {t('BLOCKS.DELETE_BULK')}
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedIds([])}
+                                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-white"
+                                >
+                                    {t('PROFILE.CANCEL')}
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -319,6 +401,12 @@ export default function Settings({ availabilities }: Props) {
                                 (s) => s.day_of_week === dayValue,
                             );
                             if (slots.length === 0) return null;
+
+                            const dayIds = slots.map((s) => s.id);
+                            const isAllDaySelected = dayIds.every((id) =>
+                                selectedIds.includes(id),
+                            );
+
                             return (
                                 <motion.section
                                     key={dayValue}
@@ -327,10 +415,25 @@ export default function Settings({ availabilities }: Props) {
                                     animate="visible"
                                     className="w-full"
                                 >
-                                    <div className="mb-10 flex items-center gap-6">
-                                        <h4 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
-                                            {getDayLabel(dayValue)}
-                                        </h4>
+                                    <div className="mb-10 flex flex-wrap items-center gap-6">
+                                        <div className="flex items-center gap-4">
+                                            <h4 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900">
+                                                {getDayLabel(dayValue)}
+                                            </h4>
+                                            <button
+                                                onClick={() =>
+                                                    toggleSelectDay(dayIds)
+                                                }
+                                                className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all ${isAllDaySelected ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200' : 'border-slate-200 bg-white text-slate-400 hover:border-blue-300 hover:text-blue-500'}`}
+                                            >
+                                                <CheckCircle2 size={12} />
+                                                {isAllDaySelected
+                                                    ? t(
+                                                          'BLOCKS.CLEAN_SELECTION',
+                                                      )
+                                                    : t('BLOCKS.SELECT_ALL')}
+                                            </button>
+                                        </div>
                                         <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
                                         <div className="flex items-center gap-3 rounded-full bg-slate-50 px-5 py-2 ring-1 ring-slate-100">
                                             <div className="h-2 w-2 rounded-full bg-blue-500 shadow-sm" />
@@ -361,6 +464,14 @@ export default function Settings({ availabilities }: Props) {
                                                         label={t(
                                                             'SCHEDULE.LABEL_TIME',
                                                         )}
+                                                        isSelected={selectedIds.includes(
+                                                            slot.id,
+                                                        )}
+                                                        onToggleSelect={() =>
+                                                            toggleSelect(
+                                                                slot.id,
+                                                            )
+                                                        }
                                                         onRemove={() =>
                                                             handleRemove(
                                                                 slot.id,

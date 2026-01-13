@@ -1,18 +1,24 @@
 import { useToast } from '@/Contexts/ToastContext';
 import { useTrans } from '@/Hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { PageProps } from '@/types';
 import { AppointmentStatus, DashboardAction } from '@/types/Enums';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion, Variants } from 'framer-motion';
 import {
     Check,
     Clock,
     LayoutDashboard,
     Calendar as LucideCalendar,
+    Share2,
+    UserX,
+    X,
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import CancelledHistoryModal from './Dashboard/Partials/CancelledHistoryModal';
 import CreateAppointmentModal from './Dashboard/Partials/CreateAppointmentModal';
 import DateNavigator from './Dashboard/Partials/DateNavigator';
+import PatientProfileView from './Dashboard/Partials/PatientProfileView';
 import PendingAppointmentItem from './Dashboard/Partials/PendingAppointmentItem';
 import RescheduleModal from './Dashboard/Partials/RescheduleModal';
 import StatCard from './Dashboard/Partials/StatCard';
@@ -20,6 +26,7 @@ import TimelineItem from './Dashboard/Partials/TimelineItem';
 
 export interface Appointment {
     id: number;
+    patient_id: number;
     patient_name: string;
     procedure: string;
     status: AppointmentStatus;
@@ -32,13 +39,15 @@ export interface TimelineSlot {
 }
 
 interface Stats {
-    pending_today: number;
-    confirmed_today: number;
+    pending_week: number;
+    confirmed_week: number;
+    cancelled_week: number;
     available_slots: number;
 }
 
 export interface PendingAppointment {
     id: number;
+    patient_id: number;
     patient_name: string;
     date: string;
     time: string;
@@ -50,6 +59,7 @@ interface Props {
     selectedDate: string;
     stats: Stats;
     allPending: PendingAppointment[];
+    workingDays: number[];
 }
 
 interface RescheduleData {
@@ -64,9 +74,16 @@ export default function Dashboard({
     selectedDate,
     stats,
     allPending,
+    workingDays,
 }: Props) {
     const { t } = useTrans();
     const { addToast } = useToast();
+    const { auth } = usePage<PageProps>().props;
+
+    const [isCancelledModalOpen, setIsCancelledModalOpen] = useState(false);
+    const [selectedPatientProfileId, setSelectedPatientProfileId] = useState<
+        number | null
+    >(null);
 
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
@@ -116,6 +133,14 @@ export default function Dashboard({
         [addToast, t],
     );
 
+    const setSpecificDate = useCallback((newDate: string) => {
+        router.get(
+            route('dashboard'),
+            { date: newDate },
+            { preserveState: true },
+        );
+    }, []);
+
     const openCreateModal = useCallback((time: string) => {
         setModalState({ isOpen: true, time });
     }, []);
@@ -137,6 +162,50 @@ export default function Dashboard({
         [selectedDate],
     );
 
+    const fallbackCopyTextToClipboard = (text: string) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                addToast(t('DASHBOARD.LINK_COPIED') || 'Link copiado!');
+            }
+        } catch (err) {
+            console.error('Falha crítica ao copiar link:', err);
+        }
+        document.body.removeChild(textArea);
+    };
+
+    const handleCopyShareLink = () => {
+        const slug = auth.user.slug;
+        if (!slug) {
+            addToast('Erro: Slug do dentista não encontrado.');
+            return;
+        }
+
+        const shareUrl = `${window.location.origin}/${slug}?date=${selectedDate}`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+                .writeText(shareUrl)
+                .then(() => {
+                    addToast(t('DASHBOARD.LINK_COPIED') || 'Link copiado!');
+                })
+                .catch(() => {
+                    fallbackCopyTextToClipboard(shareUrl);
+                });
+        } else {
+            fallbackCopyTextToClipboard(shareUrl);
+        }
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
@@ -152,7 +221,23 @@ export default function Dashboard({
                             <DateNavigator
                                 selectedDate={selectedDate}
                                 onChangeDate={changeDate}
+                                onSetDate={setSpecificDate}
+                                workingDays={workingDays}
                             />
+
+                            <div className="px-6 pb-2">
+                                <button
+                                    onClick={handleCopyShareLink}
+                                    className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-50 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm transition-all hover:bg-rose-500 hover:text-white active:scale-95"
+                                >
+                                    <Share2
+                                        size={14}
+                                        className="transition-transform group-hover:rotate-12"
+                                    />
+                                    {t('DASHBOARD.SHARE_DAY_LINK') ||
+                                        `Copiar link do dia`}
+                                </button>
+                            </div>
 
                             <div className="custom-scrollbar relative max-h-[600px] overflow-y-auto overflow-x-hidden p-6 md:max-h-[calc(100vh-250px)]">
                                 <AnimatePresence mode="popLayout">
@@ -174,6 +259,11 @@ export default function Dashboard({
                                                 onSelect={openCreateModal}
                                                 onReschedule={
                                                     openRescheduleModal
+                                                }
+                                                onViewProfile={(id) =>
+                                                    setSelectedPatientProfileId(
+                                                        id,
+                                                    )
                                                 }
                                             />
                                         ))}
@@ -206,7 +296,7 @@ export default function Dashboard({
                                 </h1>
                                 <p className="mt-4 text-sm font-bold uppercase tracking-widest text-slate-400">
                                     {t('DASHBOARD.SUMMARY_TEXT', {
-                                        count: stats.pending_today,
+                                        count: allPending.length,
                                     })}
                                 </p>
                             </div>
@@ -216,25 +306,36 @@ export default function Dashboard({
 
                         <motion.div
                             variants={itemVariants}
-                            className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+                            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
                         >
                             <StatCard
-                                label={t('DASHBOARD.PENDING')}
-                                value={stats.pending_today}
+                                label={t('DASHBOARD.PENDING_WEEK')}
+                                value={stats.pending_week}
                                 icon={<Clock className="text-amber-500" />}
                             />
                             <StatCard
-                                label={t('DASHBOARD.CONFIRMED')}
-                                value={stats.confirmed_today}
+                                label={t('DASHBOARD.CONFIRMED_WEEK')}
+                                value={stats.confirmed_week}
                                 icon={<Check className="text-emerald-500" />}
                             />
                             <StatCard
                                 label={t('DASHBOARD.FREE_SLOTS')}
                                 value={stats.available_slots}
                                 icon={
-                                    <LucideCalendar className="text-rose-500" />
+                                    <LucideCalendar className="text-blue-500" />
                                 }
                             />
+                            <button
+                                onClick={() => setIsCancelledModalOpen(true)}
+                                className="group text-left outline-none"
+                            >
+                                <StatCard
+                                    label={t('DASHBOARD.CANCELLED_WEEK')}
+                                    value={stats.cancelled_week}
+                                    icon={<UserX className="text-rose-500" />}
+                                    className="border-dashed transition-all group-hover:border-rose-200 group-hover:bg-rose-50/10"
+                                />
+                            </button>
                         </motion.div>
 
                         <motion.section
@@ -256,6 +357,11 @@ export default function Dashboard({
                                                 key={app.id}
                                                 appointment={app}
                                                 onAction={handleAction}
+                                                onViewProfile={(id) =>
+                                                    setSelectedPatientProfileId(
+                                                        id,
+                                                    )
+                                                }
                                             />
                                         ))
                                     ) : (
@@ -295,6 +401,43 @@ export default function Dashboard({
                     setRescheduleData({ isOpen: false, appointment: null })
                 }
             />
+
+            <CancelledHistoryModal
+                isOpen={isCancelledModalOpen}
+                onClose={() => setIsCancelledModalOpen(false)}
+            />
+
+            <AnimatePresence>
+                {selectedPatientProfileId && (
+                    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                            onClick={() => setSelectedPatientProfileId(null)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-xl overflow-hidden rounded-[3rem] bg-white p-10 shadow-2xl"
+                        >
+                            <button
+                                onClick={() =>
+                                    setSelectedPatientProfileId(null)
+                                }
+                                className="absolute right-8 top-8 p-2 text-slate-400 transition-colors hover:text-rose-500"
+                            >
+                                <X size={24} />
+                            </button>
+                            <PatientProfileView
+                                patientId={selectedPatientProfileId}
+                            />
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </AuthenticatedLayout>
     );
 }

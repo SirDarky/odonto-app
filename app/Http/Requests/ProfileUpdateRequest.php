@@ -29,6 +29,8 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'specialty' => ['nullable', 'string', 'max:100'],
             'bio' => ['nullable', 'string', 'max:500'],
+            'google_maps_link' => ['nullable', 'url', 'max:500'],
+            'address' => ['nullable', 'string', 'max:255'],
         ];
     }
 

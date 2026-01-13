@@ -25,6 +25,8 @@ class User extends Authenticatable
         'specialty',
         'bio',
         'avatar_path',
+        'google_maps_link',
+        'address',
     ];
 
 

@@ -2,7 +2,14 @@ import { TransFunction } from '@/Hooks/useTrans';
 import { TimelineSlot } from '@/Pages/Dashboard';
 import { AppointmentStatus, DashboardAction } from '@/types/Enums';
 import { motion } from 'framer-motion';
-import { Ban, CalendarDays, Check, Clock, MoreVertical } from 'lucide-react';
+import {
+    AlertCircle,
+    Ban,
+    CalendarDays,
+    Check,
+    Clock,
+    MoreVertical,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface RescheduleData {
@@ -13,12 +20,13 @@ interface RescheduleData {
 }
 
 interface Props {
-    slot: TimelineSlot;
+    slot: TimelineSlot & { is_past?: boolean };
     t: TransFunction;
     selectedDate: string;
     onAction: (id: number, action: DashboardAction) => void;
     onSelect: (time: string) => void;
     onReschedule: (data: RescheduleData) => void;
+    onViewProfile: (patientId: number) => void;
 }
 
 export default function TimelineItem({
@@ -28,6 +36,7 @@ export default function TimelineItem({
     onAction,
     onSelect,
     onReschedule,
+    onViewProfile,
 }: Props) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -53,6 +62,8 @@ export default function TimelineItem({
     const getBgColor = () => {
         if (slot.is_blocked)
             return 'border-slate-50 bg-slate-50/50 opacity-60 cursor-not-allowed';
+        if (slot.is_past && !slot.appointment)
+            return 'border-slate-50 bg-slate-50/30 opacity-50 cursor-default';
         if (isPending)
             return 'border-amber-200 bg-amber-50/40 ring-4 ring-amber-500/5';
         if (isScheduled) return 'border-emerald-100 bg-emerald-50/40';
@@ -65,16 +76,22 @@ export default function TimelineItem({
         return 'text-slate-400';
     };
 
+    const handleSlotClick = () => {
+        if (!slot.appointment && !slot.is_blocked && !slot.is_past) {
+            onSelect(slot.time);
+        }
+    };
+
     return (
         <motion.div
             layout
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.01, x: 5 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() =>
-                !slot.appointment && !slot.is_blocked && onSelect(slot.time)
+            whileHover={
+                !slot.is_past || slot.appointment ? { scale: 1.01, x: 5 } : {}
             }
+            whileTap={!slot.is_past || slot.appointment ? { scale: 0.98 } : {}}
+            onClick={handleSlotClick}
             className={`group relative flex w-full gap-4 rounded-[1.8rem] border p-4 text-left transition-all duration-300 ${getBgColor()} ${
                 menuOpen ? 'z-[60] shadow-xl' : 'z-10'
             }`}
@@ -93,7 +110,14 @@ export default function TimelineItem({
                     </span>
                 ) : slot.appointment ? (
                     <div className="flex flex-col">
-                        <span className="text-xs font-black uppercase tracking-tight text-slate-800">
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (slot.appointment?.patient_id)
+                                    onViewProfile(slot.appointment.patient_id);
+                            }}
+                            className="cursor-pointer text-xs font-black uppercase tracking-tight text-slate-800 transition-colors hover:text-rose-500"
+                        >
                             {slot.appointment.patient_name}
                         </span>
                         <span
@@ -103,26 +127,35 @@ export default function TimelineItem({
                         </span>
 
                         {isPending && (
-                            <div className="mt-3 flex gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onAction(
-                                            slot.appointment!.id,
-                                            DashboardAction.CONFIRM,
-                                        );
-                                    }}
-                                    className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-1.5 text-[9px] font-black uppercase text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600 active:scale-95"
-                                >
-                                    <Check className="h-3 w-3" />
-                                    {t('ACTION.CONFIRM')}
-                                </button>
+                            <div className="mt-3 flex items-center gap-2">
+                                {!slot.is_past ? (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onAction(
+                                                slot.appointment!.id,
+                                                DashboardAction.CONFIRM,
+                                            );
+                                        }}
+                                        className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-1.5 text-[9px] font-black uppercase text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600 active:scale-95"
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        {t('ACTION.CONFIRM')}
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-[9px] font-black uppercase text-rose-500">
+                                        <AlertCircle className="h-3 w-3" />
+                                        Horário Expirado (Reagendar)
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
                 ) : (
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-300 group-hover:text-rose-400">
-                        {t('DASHBOARD.AVAILABLE')}
+                        {slot.is_past
+                            ? 'Indisponível'
+                            : t('DASHBOARD.AVAILABLE')}
                     </span>
                 )}
             </div>

@@ -23,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // DASHBOARD PRINCIPAL
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/patients/search', [PatientController::class, 'searchByCpf'])->name('patients.search');
+    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
 
     // PERFIL DO USUÁRIO
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -35,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/{id}/confirm', [AppointmentController::class, 'confirm'])->name('confirm');
         Route::patch('/{id}/cancel', [AppointmentController::class, 'cancel'])->name('cancel');
         Route::patch('/{id}/reschedule', [AppointmentController::class, 'reschedule'])->name('reschedule');
+        Route::get('/cancelled', [AppointmentController::class, 'getCancelledHistory'])->name('cancelled');
     });
 
     // CONFIGURAÇÕES DE AGENDA
@@ -44,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [AvailabilityController::class, 'settings'])->name('index');
             Route::post('/', [AvailabilityController::class, 'store'])->name('store');
+            // Adicione esta linha:
+            Route::post('/bulk', [AvailabilityController::class, 'storeBulk'])->name('store-bulk');
+            Route::delete('/bulk', [AvailabilityController::class, 'bulkDestroySettings'])->name('bulk-destroy');
             Route::delete('/{id}', [AvailabilityController::class, 'destroy'])->name('destroy');
         });
 
@@ -56,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+
 require __DIR__ . '/auth.php';
 
 // 4. PÁGINA PÚBLICA DO DENTISTA (Sempre por ÚLTIMO)
@@ -65,4 +71,6 @@ Route::middleware(['throttle:10,1'])->group(function () {
 
     Route::post('/{slug}/book', [AppointmentController::class, 'store'])
         ->name('public.book');
+
+    Route::get('/public/patient/search', [PatientController::class, 'searchByCpfPublic'])->name('patients.searchPublic');
 });

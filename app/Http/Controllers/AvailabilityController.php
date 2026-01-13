@@ -113,6 +113,69 @@ class AvailabilityController extends Controller
         return back()->with('success', 'Horário salvo com sucesso (UTC).');
     }
 
+    public function storeBulk(Request $request)
+    {
+        $request->validate([
+            'slots' => 'required|array',
+            'slots.*.day_of_week' => 'required|integer|between:0,6',
+            'slots.*.start_time' => 'required|date_format:H:i',
+            'slots.*.end_time' => 'required|date_format:H:i|after:slots.*.start_time',
+        ]);
+
+        $user = Auth::user();
+        $ip = ($request->ip() === '127.0.0.1') ? '104.28.199.163' : $request->ip();
+        $position = Location::get($ip);
+        $tz = $position ? $position->timezone : 'America/Sao_Paulo';
+
+        $errors = [];
+        $createdCount = 0;
+
+        DB::transaction(function () use ($request, $user, $tz, &$createdCount, &$errors) {
+            foreach ($request->slots as $index => $slot) {
+                $startLocal = Carbon::now($tz)->setTimeFromTimeString($slot['start_time']);
+                $endLocal = Carbon::now($tz)->setTimeFromTimeString($slot['end_time']);
+
+                $daysToAdd = $slot['day_of_week'] - $startLocal->dayOfWeek;
+                $startLocal->addDays($daysToAdd);
+                $endLocal->addDays($daysToAdd);
+
+                $startUtc = $startLocal->copy()->tz('UTC');
+                $endUtc = $endLocal->copy()->tz('UTC');
+
+                $utcDay = $startUtc->dayOfWeek;
+                $utcStartTime = $startUtc->format('H:i:s');
+                $utcEndTime = $endUtc->format('H:i:s');
+
+                $overlap = $user->availabilities()
+                    ->where('day_of_week', $utcDay)
+                    ->where(function ($query) use ($utcStartTime, $utcEndTime) {
+                        $query->where('start_time', '<', $utcEndTime)
+                            ->where('end_time', '>', $utcStartTime);
+                    })->exists();
+
+                if ($overlap) {
+                    $errors[] = "O slot {$slot['start_time']} conflita com um horário existente.";
+                    continue;
+                }
+
+                $user->availabilities()->create([
+                    'day_of_week' => $utcDay,
+                    'start_time' => $utcStartTime,
+                    'end_time'   => $utcEndTime,
+                    'active'     => true
+                ]);
+
+                $createdCount++;
+            }
+        });
+
+        if (count($errors) > 0) {
+            return back()->withErrors(['slots' => $errors]);
+        }
+
+        return back()->with('success', "{$createdCount} horários gerados com sucesso.");
+    }
+
     public function storeBlock(Request $request)
     {
         $request->validate([
@@ -256,5 +319,20 @@ class AvailabilityController extends Controller
     {
         Auth::user()->availabilities()->findOrFail($id)->delete();
         return back()->with('success', 'Horário removido com sucesso!');
+    }
+
+    public function bulkDestroySettings(Request $request)
+    {
+        $ids = $request->input('ids');
+
+        if (!$ids || !is_array($ids)) {
+            return back()->with('error', 'Nenhum horário selecionado.');
+        }
+
+        Auth::user()->availabilities()
+            ->whereIn('id', $ids)
+            ->delete();
+
+        return back()->with('success', 'Horários removidos com sucesso!');
     }
 }

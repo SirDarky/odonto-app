@@ -10,7 +10,7 @@
         "CENTER": "Agenda & Disponibilidade",
         "GRID": "Grade de Horários",
         "GRID_DESC": "Defina seus turnos e horários padrão de atendimento para a clínica.",
-        "BLOCKS": "Bloqueios e Férias",
+        "BLOCKS": "Bloqueio de agenda",
         "BLOCKS_DESC": "Registre períodos de ausência, feriados ou pausas específicas.",
         "TIPS_TITLE": "Gestão Inteligente",
         "TIPS_DESC": "Sincronize seus bloqueios para garantir que nenhum agendamento ocorra em seus períodos de descanso.",
@@ -62,7 +62,13 @@
         "LABEL_PASSWORD": "Senha",
         "COPY_LINK": "Copiar Link",
         "LINK_COPIED": "Copiado!",
-        "EDIT_SLUG": "Alterar Link"
+        "EDIT_SLUG": "Alterar Link",
+        "LABEL_ADDRESS": "Endereço da Clínica",
+        "LABEL_MAPS_LINK": "Link do Google Maps",
+        "MAP_HELP_TEXT": "Toque no mapa para marcar a localização",
+        "SELECT_ON_MAP": "Seleciona no mapa",
+        "CLOSE_MAP": "Fechar Mapa",
+        "MAP_INSTRUCTION": "Clique no mapa para marcar a localização exata da sua clínica:"
     },
     "AUTH": {
         "LOGIN": "Entrar",
@@ -88,19 +94,36 @@
         "FINISH": "Finalizar Cadastro",
         "REGISTER_BUTTON": "Finalizar Cadastro",
         "ALREADY_HAVE_ACCOUNT": "Já possui conta? Faça o login",
-        "ALREADY_REGISTERED": "Já possui conta? Faça o login"
+        "ALREADY_REGISTERED": "Já possui conta? Faça o login",
+        "LOGOUT": "Sair do Sistema"
     },
     "DASHBOARD": {
         "AGENDA": "Minha Agenda",
         "BLOCKED": "Horário Bloqueado",
         "AVAILABLE": "Livre para agendamento",
         "PENDING": "Pendentes",
+        "PENDING_WEEK": "Pendentes (7 Dias)",
         "CONFIRMED": "Confirmados",
+        "CONFIRMED_WEEK": "Confirmados (7 Dias)",
+        "CANCELLED_WEEK": "Cancelados (7 Dias)",
         "FREE_SLOTS": "Vagos hoje",
         "GREETING": "Bem-vindo",
         "SUMMARY_TEXT": "Você tem :count solicitações aguardando aprovação.",
         "GLOBAL_PENDING_TITLE": "Solicitações Pendentes Globais",
-        "NO_PENDING_FOUND": "Nenhuma pendência encontrada"
+        "NO_PENDING_FOUND": "Nenhuma pendência encontrada",
+        "LINK_COPIED": "Link de agendamento copiado para a área de transferência!",
+        "SHARE_DAY_LINK": "Copiar link do dia"
+    },
+    "CANCELLED_MODAL": {
+        "HISTORY_TITLE": "Histórico de Cancelados",
+        "HISTORY_SUBTITLE": "Global de desistências",
+        "PROFILE_TITLE": "Perfil do Paciente",
+        "PROFILE_SUBTITLE": "Informações detalhadas",
+        "LOADING": "Carregando histórico...",
+        "LOADING_PROFILE": "Carregando perfil...",
+        "EMPTY": "Nenhum cancelamento encontrado",
+        "BADGE": "Ficha do Paciente",
+        "OPEN_CHART": "Abrir Prontuário Completo"
     },
     "ACTION": {
         "CONFIRM": "Confirmar",
@@ -189,11 +212,24 @@
         "LABEL_NAME": "Seu Nome Completo",
         "LABEL_CPF": "CPF",
         "LABEL_PHONE": "WhatsApp / Telefone",
-        "LABEL_EMAIL": "E-mail (Opcional)",
+        "LABEL_EMAIL": "E-mail",
         "SUBMIT_BUTTON": "Solicitar Agendamento",
         "SUCCESS_TITLE": "Solicitação Enviada!",
         "SUCCESS_MESSAGE": "O Dr. analisará sua solicitação e você receberá uma confirmação em breve.",
-        "BACK_TO_SITE": "Voltar ao perfil"
+        "BACK_TO_SITE": "Voltar ao perfil",
+        "LOCATION_TITLE": "Contato e Localização",
+        "OPEN_MAPS": "Ver no Google Maps",
+        "NO_BIO": "Profissional dedicado ao cuidado e excelência no atendimento odontológico.",
+        "BACK_TO_SCHEDULE": "Voltar para horários",
+        "PATIENT_FOUND_TITLE": "Paciente Identificado",
+        "PATIENT_FOUND_DESC": "Reconhecemos seu cadastro! Clique abaixo para finalizar.",
+        "NEW_PATIENT_TITLE": "Parece que é sua primeira vez aqui:",
+        "NEW_PATIENT_DESC": "Por favor, informe seus dados para cadastro:",
+        "ALTER_CPF": "Alterar",
+        "SEARCHING": "Buscando...",
+        "AVAILABLE_HOURS": "Horarios disponiveis",
+        "CHOOSE_DAY": "Escolha um dia",
+        "NO_SLOTS": "Nenhum horário livre para esta data."
     },
     "ERRORS": {
         "INVALID_RANGE": "O horário de término deve ser após o de início.",
@@ -216,6 +252,11 @@
     "PAGINATION": {
         "NEXT": "Próximo",
         "PREVIOUS": "Anterior"
+    },
+    "DATE_NAVIGATOR": {
+        "LEGEND_PART1": "Dias em",
+        "LEGEND_COLOR": "Rosa",
+        "LEGEND_PART2": "são dias de atendimento"
     },
     "auth.failed": "E-mail ou senha incorretos. Tente novamente.",
     "throttle": "Muitas tentativas de login. Tente novamente em :seconds segundos."

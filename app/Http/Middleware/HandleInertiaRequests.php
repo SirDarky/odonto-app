@@ -29,10 +29,24 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id'   => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'slug' => $user->slug,
+                    'avatar_path' => $user->avatar_path
+                        ? \Illuminate\Support\Facades\Storage::url($user->avatar_path)
+                        : null,
+                ] : null,
+            ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error'   => $request->session()->get('error'),
             ],
             'translations' => function () {
                 $locale = app()->getLocale();

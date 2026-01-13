@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MapSelector from '@/Components/MapSelector';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { useTrans } from '@/Hooks/useTrans';
@@ -13,13 +14,16 @@ import {
     Copy,
     Globe,
     GraduationCap,
+    LinkIcon,
     Lock,
+    Map as MapIcon,
+    MapPin,
     Sparkles,
     Unlock,
     User,
     X,
 } from 'lucide-react';
-import { FormEventHandler, useEffect, useRef, useState } from 'react';
+import { FormEventHandler, useEffect, useMemo, useRef, useState } from 'react';
 
 interface Props {
     className?: string;
@@ -33,6 +37,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
     const fileInput = useRef<HTMLInputElement>(null);
     const [isSlugEditable, setIsSlugEditable] = useState(false);
     const [hasCopied, setHasCopied] = useState(false);
+    const [showMap, setShowMap] = useState(false);
     const [preview, setPreview] = useState<string | null>(
         user.avatar_path ? `/storage/${user.avatar_path}` : null,
     );
@@ -54,8 +59,32 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
             slug: user.slug || '',
             specialty: user.specialty || '',
             bio: user.bio || '',
+            google_maps_link: user.google_maps_link || '',
+            address: user.address || '',
             avatar: null as File | null,
         });
+
+    // Extrai coordenadas da URL salva no banco para posicionar o marcador ao abrir
+    const initialCoords = useMemo(() => {
+        if (!data.google_maps_link) return undefined;
+
+        // Regex para capturar latitude e longitude de links tipo google.com/maps?q=lat,lng
+        const regex = /q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const match = data.google_maps_link.match(regex);
+
+        if (match) {
+            return [parseFloat(match[1]), parseFloat(match[2])] as [
+                number,
+                number,
+            ];
+        }
+        return undefined;
+    }, [data.google_maps_link]);
+
+    const handleLocationSelected = (lat: number, lng: number) => {
+        const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+        setData('google_maps_link', mapsLink);
+    };
 
     const copyToClipboard = () => {
         const fullUrl = `${window.location.origin}/${data.slug}`;
@@ -77,15 +106,12 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
     const fallbackCopyTextToClipboard = (text: string) => {
         const textArea = document.createElement('textarea');
         textArea.value = text;
-
         textArea.style.top = '0';
         textArea.style.left = '0';
         textArea.style.position = 'fixed';
-
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-
         try {
             const successful = document.execCommand('copy');
             if (successful) {
@@ -95,7 +121,6 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
         } catch (err) {
             console.error('Falha crítica ao copiar link:', err);
         }
-
         document.body.removeChild(textArea);
     };
 
@@ -160,6 +185,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                     animate="visible"
                     className="space-y-8"
                 >
+                    {/* AVATAR SECTION */}
                     <motion.div
                         variants={itemVariants}
                         className="flex flex-col items-center gap-6 sm:flex-row"
@@ -230,6 +256,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                         </div>
                     </motion.div>
 
+                    {/* NAME & EMAIL */}
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <motion.div
                             variants={itemVariants}
@@ -284,6 +311,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                         </motion.div>
                     </div>
 
+                    {/* SLUG SECTION */}
                     <motion.div
                         variants={itemVariants}
                         className="space-y-3"
@@ -331,11 +359,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                         <div className="group relative flex items-center">
                             <div
                                 ref={prefixRef}
-                                className={`absolute left-5 z-10 text-[11px] font-black uppercase tracking-tighter transition-colors ${
-                                    isSlugEditable
-                                        ? 'text-rose-500'
-                                        : 'text-slate-300'
-                                }`}
+                                className={`absolute left-5 z-10 text-[11px] font-black uppercase tracking-tighter transition-colors ${isSlugEditable ? 'text-rose-500' : 'text-slate-300'}`}
                             >
                                 {t('LINK_APP')}
                             </div>
@@ -343,23 +367,14 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                                 id="slug"
                                 disabled={!isSlugEditable}
                                 style={{ paddingLeft: `${prefixWidth}px` }}
-                                className={`block w-full rounded-[1.2rem] py-4 pr-12 font-black tracking-tight shadow-sm transition-all ${
-                                    isSlugEditable
-                                        ? 'border-rose-200 bg-white text-slate-700 focus:border-rose-500 focus:ring-rose-500/20'
-                                        : 'cursor-not-allowed border-slate-50 bg-slate-50/50 text-slate-400'
-                                }`}
+                                className={`block w-full rounded-[1.2rem] py-4 pr-12 font-black tracking-tight shadow-sm transition-all ${isSlugEditable ? 'border-rose-200 bg-white text-slate-700 focus:border-rose-500 focus:ring-rose-500/20' : 'cursor-not-allowed border-slate-50 bg-slate-50/50 text-slate-400'}`}
                                 value={data.slug}
                                 onChange={(e) =>
                                     setData('slug', e.target.value)
                                 }
-                                placeholder="seu-link"
                             />
                             <Globe
-                                className={`absolute right-5 h-4 w-4 transition-colors ${
-                                    isSlugEditable
-                                        ? 'text-rose-500'
-                                        : 'text-slate-200'
-                                }`}
+                                className={`absolute right-5 h-4 w-4 transition-colors ${isSlugEditable ? 'text-rose-500' : 'text-slate-200'}`}
                             />
                         </div>
                         <InputError
@@ -368,6 +383,7 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                         />
                     </motion.div>
 
+                    {/* SPECIALTY & BIO */}
                     <motion.div
                         variants={itemVariants}
                         className="space-y-2"
@@ -386,7 +402,6 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                                 onChange={(e) =>
                                     setData('specialty', e.target.value)
                                 }
-                                placeholder="Ex: Ortodontista e Estética"
                             />
                         </div>
                         <InputError
@@ -418,8 +433,104 @@ export default function UpdateProfileInformation({ className = '' }: Props) {
                             className="px-1"
                         />
                     </motion.div>
+
+                    <motion.div
+                        variants={itemVariants}
+                        className="grid grid-cols-1 gap-8 md:grid-cols-2"
+                    >
+                        <div className="space-y-2">
+                            <InputLabel
+                                htmlFor="address"
+                                value={t('PROFILE.LABEL_ADDRESS')}
+                                className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                            />
+                            <div className="group relative">
+                                <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-rose-500" />
+                                <TextInput
+                                    id="address"
+                                    className="block w-full rounded-[1.2rem] border-slate-100 bg-white py-4 pl-11 shadow-sm transition-all focus:border-rose-500 focus:ring-rose-500/20"
+                                    value={data.address}
+                                    onChange={(e) =>
+                                        setData('address', e.target.value)
+                                    }
+                                    placeholder="Ex: Av. Paulista, 1000 - São Paulo"
+                                />
+                            </div>
+                            <InputError
+                                message={errors.address}
+                                className="px-1"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between px-1">
+                                <InputLabel
+                                    htmlFor="google_maps_link"
+                                    value={t('PROFILE.LABEL_MAPS_LINK')}
+                                    className="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMap(!showMap)}
+                                    className="flex items-center gap-1 text-[9px] font-black uppercase text-rose-500 transition-colors hover:text-rose-600"
+                                >
+                                    <MapIcon size={10} />{' '}
+                                    {showMap
+                                        ? t('PROFILE.CLOSE_MAP')
+                                        : t('PROFILE.SELECT_ON_MAP')}
+                                </button>
+                            </div>
+                            <div className="group relative">
+                                <LinkIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-rose-500" />
+                                <TextInput
+                                    id="google_maps_link"
+                                    className="block w-full rounded-[1.2rem] border-slate-100 bg-white py-4 pl-11 shadow-sm transition-all focus:border-rose-500 focus:ring-rose-500/20"
+                                    value={data.google_maps_link}
+                                    onChange={(e) =>
+                                        setData(
+                                            'google_maps_link',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </div>
+                            <InputError
+                                message={errors.google_maps_link}
+                                className="px-1"
+                            />
+                        </div>
+
+                        {/* MAP SELECTOR PANEL */}
+                        <AnimatePresence>
+                            {showMap && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden md:col-span-2"
+                                >
+                                    <div className="mb-4 rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                                        <p className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                                            <Sparkles
+                                                size={12}
+                                                className="text-rose-500"
+                                            />
+                                            {t('PROFILE.MAP_INSTRUCTION')}
+                                        </p>
+                                        <MapSelector
+                                            onLocationSelect={
+                                                handleLocationSelected
+                                            }
+                                            initialPos={initialCoords}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
                 </motion.div>
 
+                {/* SUBMIT BUTTON */}
                 <motion.div
                     variants={itemVariants}
                     className="flex items-center gap-6 pt-6"

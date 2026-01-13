@@ -7,7 +7,7 @@ interface PremiumCardProps {
     title: string;
     description: string;
     icon: ReactNode;
-    color: 'indigo' | 'emerald' | 'amber';
+    color: 'indigo' | 'emerald' | 'amber' | 'rose';
 }
 
 export default function PremiumCard({
@@ -32,6 +32,11 @@ export default function PremiumCard({
             bg: 'bg-amber-50/50',
             icon: 'bg-amber-100 text-amber-600',
             light: 'group-hover:bg-amber-600',
+        },
+        rose: {
+            bg: 'bg-rose-50/50',
+            icon: 'bg-rose-100 text-rose-600',
+            light: 'group-hover:bg-rose-600',
         },
     };
 

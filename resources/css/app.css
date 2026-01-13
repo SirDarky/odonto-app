@@ -11,3 +11,8 @@ select {
 .select-clean {
     padding-right: 2.5rem !important;
 }
+
+.leaflet-container {
+    border-radius: 1.5rem;
+    z-index: 1 !important;
+}

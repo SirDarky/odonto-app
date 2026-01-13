@@ -19,50 +19,88 @@ class PublicProfileController extends Controller
         $patientTz = $position ? $position->timezone : 'America/Sao_Paulo';
 
         $nowPatient = Carbon::now($patientTz);
-        $selectedDate = $request->get('date', $nowPatient->toDateString());
 
-        $availableDays = [];
-        for ($i = 0; $i < 7; $i++) {
-            $date = $nowPatient->copy()->addDays($i);
-            $availableDays[] = [
-                'full'    => $date->toDateString(),
-                'day'     => $date->format('d'),
-                'month'   => $date->translatedFormat('M'),
-                'weekday' => $date->translatedFormat('D'),
-            ];
-        }
-
-        // 3. Busca de Disponibilidade
         $availabilities = $doctor->availabilities()->where('active', true)->get();
 
+        $availableDays = [];
+        $checkDate = $nowPatient->copy();
+        $maxIterations = 90;
+
+        while (count($availableDays) < 15 && $maxIterations > 0) {
+            $slotsForThisDay = $this->calculateSlotsForDate($doctor, $availabilities, $checkDate->toDateString(), $patientTz, $nowPatient);
+
+            if (count($slotsForThisDay) > 0) {
+                $availableDays[] = [
+                    'full'    => $checkDate->toDateString(),
+                    'day'     => $checkDate->format('d'),
+                    'month'   => $checkDate->translatedFormat('M'),
+                    'weekday' => $checkDate->translatedFormat('D'),
+                ];
+            }
+
+            $checkDate->addDay();
+            $maxIterations--;
+        }
+
+        $defaultDate = count($availableDays) > 0 ? $availableDays[0]['full'] : $nowPatient->toDateString();
+        $selectedDate = $request->get('date', $defaultDate);
+
+        $slots = $this->calculateSlotsForDate($doctor, $availabilities, $selectedDate, $patientTz, $nowPatient);
+
+        return Inertia::render('Public/Profile', [
+            'doctor'         => $doctor,
+            'availableSlots' => $slots,
+            'availableDays'  => $availableDays,
+            'selectedDate'   => $selectedDate,
+        ]);
+    }
+
+
+    private function calculateSlotsForDate($doctor, $availabilities, $dateString, $patientTz, $nowPatient)
+    {
         $slots = [];
+
         foreach ($availabilities as $availability) {
-            // RESOLVE "Trailing data": Carbon::parse lida com H:i:s ou H:i automaticamente
             $startTimeStr = Carbon::parse($availability->start_time)->format('H:i:s');
 
-            /** * ESTRATÉGIA: Criamos o ponto no tempo (UTC) usando a data que o paciente 
-             * está visualizando no calendário como base.
-             */
-            $dateContext = Carbon::parse($selectedDate);
-
-            // Recriamos o momento em que o slot ocorreria naquela data específica em UTC
-            // Usamos a data selecionada e voltamos para a "Semana UTC" correspondente
-            $utcSlot = Carbon::parse($selectedDate, 'UTC')
+            $utcSlot = Carbon::parse($dateString, 'UTC')
                 ->startOfWeek()
                 ->addDays($availability->day_of_week)
                 ->setTimeFromTimeString($startTimeStr);
 
-            // Convertemos para o fuso do paciente
             $patientTime = $utcSlot->copy()->tz($patientTz);
 
-            // FILTRO 1: O horário convertido pertence ao dia que o paciente selecionou?
-            // (Isso resolve o problema de slots sumirem ou aparecerem no dia errado)
-            if ($patientTime->toDateString() !== $selectedDate) {
+            if ($patientTime->toDateString() !== $dateString) {
                 continue;
             }
 
-            // FILTRO 2: Bloquear horários que já passaram no relógio do paciente
             if ($patientTime->getTimestamp() < $nowPatient->getTimestamp()) {
+                continue;
+            }
+
+            $isBlocked = $doctor->blocks()
+                ->where('date', $dateString)
+                ->where(function ($q) use ($startTimeStr) {
+                    $q->where('full_day', true)
+                        ->orWhere(function ($sub) use ($startTimeStr) {
+                            $sub->where('start_time', '<=', $startTimeStr)
+                                ->where('end_time', '>', $startTimeStr);
+                        });
+                })->exists();
+
+            if ($isBlocked) {
+                continue;
+            }
+
+            $startTimeUtc = $patientTime->copy()->tz('UTC')->format('H:i:s');
+
+            $isOccupied = $doctor->appointments()
+                ->where('appointment_date', $dateString)
+                ->where('start_time', $startTimeUtc)
+                ->whereIn('status', ['confirmed', 'pending'])
+                ->exists();
+
+            if ($isOccupied) {
                 continue;
             }
 
@@ -72,14 +110,6 @@ class PublicProfileController extends Controller
             ];
         }
 
-        // Ordenação final
-        $slots = collect($slots)->sortBy('time')->values()->all();
-
-        return Inertia::render('Public/Profile', [
-            'doctor'         => $doctor,
-            'availableSlots' => $slots,
-            'availableDays'  => $availableDays,
-            'selectedDate'   => $selectedDate,
-        ]);
+        return collect($slots)->sortBy('time')->values()->all();
     }
 }

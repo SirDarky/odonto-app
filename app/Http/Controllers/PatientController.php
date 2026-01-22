@@ -35,10 +35,14 @@ class PatientController extends Controller
             return response()->json(null);
         }
 
+        $emailParts = explode('@', $patient->email);
+        $maskedEmail = Str::mask($emailParts[0], '*', 3) . '@' . $emailParts[1];
+
         return response()->json([
             'id' => $patient->id,
             'name' => Str::mask($patient->name, '*', 3),
             'phone' => Str::mask($patient->phone, '*', -4, 4),
+            'email' => $maskedEmail,
         ]);
     }
 

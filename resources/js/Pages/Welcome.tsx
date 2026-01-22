@@ -12,8 +12,6 @@ import {
     TrendingUp,
     Zap,
 } from 'lucide-react';
-
-// Importando seus assets
 import fluxa from '../images/fluxa-nome.svg';
 import logo from '../images/logo.svg';
 

@@ -2,7 +2,7 @@ import { useTrans } from '@/Hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { motion, Variants } from 'framer-motion';
-import { Clock, Lock, Settings, Zap } from 'lucide-react';
+import { ClipboardCheck, Clock, Lock, Settings, Zap } from 'lucide-react';
 import PremiumCard from './Partials/PremiumCard';
 
 export default function Index() {
@@ -98,6 +98,26 @@ export default function Index() {
                                 description={t('SCHEDULE.BLOCKS_DESC')}
                                 icon={
                                     <Lock
+                                        className="h-7 w-7"
+                                        strokeWidth={1.5}
+                                    />
+                                }
+                            />
+                        </motion.div>
+
+                        <motion.div
+                            variants={itemVariants}
+                            className="flex h-full"
+                        >
+                            <PremiumCard
+                                color="amber"
+                                href={route('settings.anamnesis.index')}
+                                title={t('SETTINGS_MENU.ANAMNESIS_CARD_TITLE')}
+                                description={t(
+                                    'SETTINGS_MENU.ANAMNESIS_CARD_DESC',
+                                )}
+                                icon={
+                                    <ClipboardCheck
                                         className="h-7 w-7"
                                         strokeWidth={1.5}
                                     />

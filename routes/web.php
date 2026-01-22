@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AnamnesisQuestionController;
+use App\Http\Controllers\AnamnesisResponseController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\DashboardController;
@@ -24,6 +26,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/patients/search', [PatientController::class, 'searchByCpf'])->name('patients.search');
     Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
+    Route::get('/patients/{id}/anamnesis', [AnamnesisResponseController::class, 'showPatientHistory'])->name('patients.anamnesis');
+    Route::get('/files/view/{patientFile}', [AnamnesisResponseController::class, 'viewFile'])
+        ->name('files.view');
 
     // PERFIL DO USUÁRIO
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -59,10 +64,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{id}', [AvailabilityController::class, 'destroyBlock'])->name('destroy');
         });
     });
+
+    Route::prefix('settings/anamnesis')->name('settings.anamnesis.')->group(function () {
+        Route::get('/', [AnamnesisQuestionController::class, 'index'])->name('index');
+        Route::post('/', [AnamnesisQuestionController::class, 'store'])->name('store');
+        Route::put('/{question}', [AnamnesisQuestionController::class, 'update'])->name('update');
+        Route::delete('/{question}', [AnamnesisQuestionController::class, 'destroy'])->name('destroy');
+        Route::post('/reorder', [AnamnesisQuestionController::class, 'reorder'])->name('reorder');
+        Route::post('/replace-template', [AnamnesisQuestionController::class, 'replaceTemplate'])->name('replace-template');
+        Route::post('/bulk-destroy', [AnamnesisQuestionController::class, 'bulkDestroy'])->name('bulk-destroy');
+    });
 });
 
 
-//require __DIR__ . '/auth.php';
+require __DIR__ . '/auth.php';
 
 // 4. PÁGINA PÚBLICA DO DENTISTA (Sempre por ÚLTIMO)
 Route::middleware(['throttle:10,1'])->group(function () {
@@ -73,4 +88,8 @@ Route::middleware(['throttle:10,1'])->group(function () {
         ->name('public.book');
 
     Route::get('/public/patient/search', [PatientController::class, 'searchByCpfPublic'])->name('patients.searchPublic');
+
+    // Anamnese
+    Route::get('/{slug}/anamnese', [AnamnesisResponseController::class, 'create'])->name('public.anamnesis.create');
+    Route::post('/{slug}/anamnese', [AnamnesisResponseController::class, 'store'])->name('public.anamnesis.store');
 });

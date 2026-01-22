@@ -258,6 +258,93 @@
         "LEGEND_COLOR": "Rosa",
         "LEGEND_PART2": "são dias de atendimento"
     },
+    "ANAMNESIS_SETTINGS": {
+        "TITLE": "FICHA DE",
+        "SUBTITLE": "ANAMNESE",
+        "BRAND": "Fluxa Clinic Suite",
+        "ADD_BUTTON": "ADICIONAR",
+        "BACK_BUTTON": "VOLTAR",
+        "MODES": {
+            "CREATE_CUSTOM": "Criar do Zero",
+            "CREATE_CUSTOM_DESC": "Monte seu formulário clínico do seu jeito.",
+            "TEMPLATE_DESC": "Template de :name"
+        },
+        "CONFIRM_MODAL": {
+            "TITLE": "Substituir",
+            "TITLE_HIGHLIGHT": "Anamnese?",
+            "DESCRIPTION": "Ao importar \":template\", suas",
+            "DESCRIPTION_HIGHLIGHT": "perguntas atuais serão apagadas",
+            "CANCEL": "Cancelar",
+            "CONFIRM": "Sim, Substituir"
+        },
+        "EDIT_MODAL": {
+            "TITLE": "Editar",
+            "TITLE_HIGHLIGHT": "Pergunta"
+        },
+        "FORM": {
+            "LABEL_TEXT": "Enunciado",
+            "LABEL_TYPE": "Tipo",
+            "LABEL_OPTIONS": "Opções",
+            "ADD_OPTION": "+ ADICIONAR OPÇÃO",
+            "CANCEL": "Cancelar",
+            "SUBMIT_CREATE": "CRIAR PERGUNTA",
+            "SUBMIT_UPDATE": "SALVAR ALTERAÇÕES",
+            "TYPES": {
+                "BOOLEAN": "Sim / Não",
+                "TEXT": "Texto Curto",
+                "TEXTAREA": "Texto Longo",
+                "CHECKBOX": "Múltipla Escolha",
+                "RADIO": "Seleção Única"
+            }
+        },
+        "LIST": {
+            "OPTIONS_LABEL": "Opções: :list",
+            "EDIT_TOOLTIP": "Editar pergunta",
+            "DELETE_TOOLTIP": "Excluir pergunta",
+            "STATUS_ACTIVE": "Ativa",
+            "STATUS_INACTIVE": "Inativa",
+            "DELETE_CONFIRM": "Deseja realmente excluir esta pergunta?",
+            "EMPTY_TITLE": "Sua anamnese está vazia",
+            "EMPTY_DESC": "Escolha um template acima ou comece do zero."
+        },
+        "SETTINGS_MENU": {
+            "ANAMNESIS_CARD_TITLE": "Anamnese",
+            "ANAMNESIS_CARD_DESC": "Configure as perguntas e o formulário clínico para seus pacientes."
+        }
+    },
+    "PUBLIC_ANAMNESIS": {
+        "HEAD_TITLE": "Ficha de Anamnese - :name",
+        "HEADER": {
+            "TITLE": "Ficha de Saúde",
+            "STEP_COUNTER": "Passo :current de :total"
+        },
+        "IDENTIFICATION": {
+            "TITLE": "Identificação",
+            "LABEL_CPF": "CPF",
+            "PLACEHOLDER_CPF": "000.000.000-00",
+            "LABEL_NAME": "Nome Completo",
+            "LABEL_EMAIL": "E-mail",
+            "LABEL_PHONE": "Telefone / WhatsApp",
+            "PLACEHOLDER_PHONE": "(00) 00000-0000",
+            "BUTTON_NEXT": "PRÓXIMO"
+        },
+        "QUESTIONS": {
+            "BOOLEAN_YES": "Sim",
+            "BOOLEAN_NO": "Não",
+            "INPUT_PLACEHOLDER": "Sua resposta aqui...",
+            "BUTTON_REVIEW": "REVISAR E ASSINAR"
+        },
+        "SIGNATURE": {
+            "TITLE": "Assinatura Digital",
+            "DESCRIPTION": "Desenhe sua assinatura no quadro abaixo.",
+            "ALERT_EMPTY": "Por favor, assine no campo indicado.",
+            "BUTTON_SUBMIT": "FINALIZAR E ENVIAR",
+            "BUTTON_PROCESSING": "ENVIANDO..."
+        },
+        "ERRORS": {
+            "PATIENT_NOT_FOUND": "Paciente não cadastrado."
+        }
+    },
     "auth.failed": "E-mail ou senha incorretos. Tente novamente.",
     "throttle": "Muitas tentativas de login. Tente novamente em :seconds segundos."
 }

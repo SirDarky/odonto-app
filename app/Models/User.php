@@ -47,10 +47,6 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Mutator para o Slug.
-     * Garante que o link seja sempre "nome-do-dentista" (lowercase e sem espaços).
-     */
     protected function setSlugAttribute($value): void
     {
         $this->attributes['slug'] = Str::slug($value);
@@ -69,5 +65,20 @@ class User extends Authenticatable
     public function blocks(): HasMany
     {
         return $this->hasMany(Block::class);
+    }
+
+    public function anamnesisQuestions(): HasMany
+    {
+        return $this->hasMany(AnamnesisQuestion::class);
+    }
+
+    public function anamnesisResponses(): HasMany
+    {
+        return $this->hasMany(AnamnesisResponse::class);
+    }
+
+    public function patientFiles(): HasMany
+    {
+        return $this->hasMany(PatientFile::class);
     }
 }
